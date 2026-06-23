@@ -4,15 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Camera } from "lucide-react";
 
-type Step = 'HOME' | 'PRE_REGISTERED_LOOKUP' | 'NOT_FOUND_QR' | 'NEW_REGISTRATION' | 'CONFIRMATION';
+type Step = 'HOME' | 'PRE_REGISTERED_LOOKUP' | 'CONFIRMATION';
 
 export default function Checkin() {
   const [step, setStep] = useState<Step>('HOME');
   const [identifier, setIdentifier] = useState("");
-  
-  // Registration form
+
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [email, setEmail] = useState("");
@@ -20,6 +19,7 @@ export default function Checkin() {
   const [experience, setExperience] = useState("");
 
   const [tokenResult, setTokenResult] = useState<{ tokenNo: string; name: string; position: string } | null>(null);
+  const [countdown, setCountdown] = useState(30);
 
   const lookupMutation = useLookupCandidate();
   const createMutation = useCreateCandidate();
@@ -33,20 +33,30 @@ export default function Checkin() {
     setPosition("");
     setExperience("");
     setTokenResult(null);
+    setCountdown(30);
     setStep('HOME');
   };
 
   useEffect(() => {
-    if (step === 'CONFIRMATION') {
-      const timer = setTimeout(resetForm, 10000);
-      return () => clearTimeout(timer);
-    }
+    if (step !== 'CONFIRMATION') return;
+    setCountdown(30);
+    const interval = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          clearInterval(interval);
+          resetForm();
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
   }, [step]);
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!identifier) return;
-    
+
     try {
       const isEmail = identifier.includes('@');
       const candidate = await lookupMutation.mutateAsync({
@@ -55,7 +65,7 @@ export default function Checkin() {
           email: isEmail ? identifier : undefined
         }
       });
-      
+
       const result = await checkinMutation.mutateAsync({ id: candidate.id });
       setTokenResult({
         tokenNo: result.tokenNo,
@@ -63,30 +73,13 @@ export default function Checkin() {
         position: candidate.position
       });
       setStep('CONFIRMATION');
-    } catch (err) {
-      if (identifier.includes('@')) setEmail(identifier);
-      else setMobile(identifier);
-      setStep('NOT_FOUND_QR');
+    } catch {
+      window.location.href = "https://tally.so/r/WOMlqL";
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const candidate = await createMutation.mutateAsync({
-        data: { name, mobile, email, position, experience }
-      });
-      
-      const result = await checkinMutation.mutateAsync({ id: candidate.id });
-      setTokenResult({
-        tokenNo: result.tokenNo,
-        name: candidate.name,
-        position: candidate.position
-      });
-      setStep('CONFIRMATION');
-    } catch (err) {
-      alert("Registration failed. Please try again.");
-    }
+  const handleRegisterRedirect = () => {
+    window.location.href = "https://tally.so/r/WOMlqL";
   };
 
   return (
@@ -106,14 +99,14 @@ export default function Checkin() {
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <h2 className="text-2xl font-bold text-center mb-8">Are you pre-registered?</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Button 
+                  <Button
                     onClick={() => setStep('PRE_REGISTERED_LOOKUP')}
                     className="h-32 text-2xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all"
                   >
                     YES
                   </Button>
-                  <Button 
-                    onClick={() => setStep('NEW_REGISTRATION')}
+                  <Button
+                    onClick={handleRegisterRedirect}
                     variant="outline"
                     className="h-32 text-2xl font-bold border-2 border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 shadow-sm transition-all"
                   >
@@ -131,12 +124,12 @@ export default function Checkin() {
                   </Button>
                   <h2 className="text-2xl font-bold">Find your registration</h2>
                 </div>
-                
+
                 <form onSubmit={handleLookup} className="space-y-6">
                   <div className="space-y-4">
                     <Label htmlFor="identifier" className="text-lg">Mobile Number or Email</Label>
-                    <Input 
-                      id="identifier" 
+                    <Input
+                      id="identifier"
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value)}
                       placeholder="Enter mobile or email..."
@@ -145,8 +138,8 @@ export default function Checkin() {
                       autoFocus
                     />
                   </div>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full h-16 text-xl font-bold rounded-xl"
                     disabled={lookupMutation.isPending || checkinMutation.isPending}
                   >
@@ -155,89 +148,16 @@ export default function Checkin() {
                     ) : "Find & Generate Token"}
                   </Button>
                 </form>
-              </div>
-            )}
 
-            {step === 'NOT_FOUND_QR' && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex items-center">
-                  <Button variant="ghost" size="icon" onClick={() => setStep('HOME')} className="mr-4 rounded-full h-12 w-12 hover:bg-zinc-100">
-                    <ArrowLeft className="h-6 w-6" />
-                  </Button>
-                  <h2 className="text-2xl font-bold">Not Pre-Registered?</h2>
-                </div>
-
-                <div className="text-center space-y-2">
-                  <p className="text-zinc-600 text-lg">We couldn't find your registration.</p>
-                  <p className="text-zinc-500">Scan the QR code below to register online, or fill in the form manually.</p>
-                </div>
-
-                <div className="flex flex-col items-center gap-4 py-4">
-                  <div className="bg-white border-2 border-zinc-100 rounded-2xl p-4 shadow-lg">
-                    <img src="/registration-qr.png" alt="Registration QR Code" className="h-52 w-52 object-contain" />
-                  </div>
-                  <p className="text-sm font-semibold text-zinc-500 uppercase tracking-widest">Scan to Register Online</p>
-                </div>
-
-                <div className="relative flex items-center gap-4">
-                  <div className="flex-1 border-t border-zinc-200" />
-                  <span className="text-sm text-zinc-400 font-medium">or</span>
-                  <div className="flex-1 border-t border-zinc-200" />
-                </div>
-
-                <Button
-                  onClick={() => setStep('NEW_REGISTRATION')}
-                  variant="outline"
-                  className="w-full h-14 text-lg font-semibold rounded-xl border-2 border-zinc-200"
-                >
-                  Fill in the Form Manually
-                </Button>
-              </div>
-            )}
-
-            {step === 'NEW_REGISTRATION' && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex items-center">
-                  <Button variant="ghost" size="icon" onClick={() => setStep('HOME')} className="mr-4 rounded-full h-12 w-12 hover:bg-zinc-100">
-                    <ArrowLeft className="h-6 w-6" />
-                  </Button>
-                  <h2 className="text-2xl font-bold">New Registration</h2>
-                </div>
-                
-                <form onSubmit={handleRegister} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                      <Label className="text-base font-semibold">Full Name</Label>
-                      <Input value={name} onChange={(e) => setName(e.target.value)} required className="h-14 text-lg bg-zinc-50 border-zinc-200" />
-                    </div>
-                    <div className="space-y-3">
-                      <Label className="text-base font-semibold">Mobile Number</Label>
-                      <Input value={mobile} onChange={(e) => setMobile(e.target.value)} required className="h-14 text-lg bg-zinc-50 border-zinc-200" />
-                    </div>
-                    <div className="space-y-3">
-                      <Label className="text-base font-semibold">Email Address</Label>
-                      <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-14 text-lg bg-zinc-50 border-zinc-200" />
-                    </div>
-                    <div className="space-y-3">
-                      <Label className="text-base font-semibold">Position Applied</Label>
-                      <Input value={position} onChange={(e) => setPosition(e.target.value)} required className="h-14 text-lg bg-zinc-50 border-zinc-200" />
-                    </div>
-                    <div className="space-y-3 md:col-span-2">
-                      <Label className="text-base font-semibold">Years of Experience</Label>
-                      <Input value={experience} onChange={(e) => setExperience(e.target.value)} className="h-14 text-lg bg-zinc-50 border-zinc-200" />
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full h-16 text-xl font-bold rounded-xl mt-4"
-                    disabled={createMutation.isPending || checkinMutation.isPending}
+                <p className="text-center text-sm text-zinc-400">
+                  Not pre-registered?{" "}
+                  <button
+                    onClick={handleRegisterRedirect}
+                    className="text-primary underline underline-offset-2 font-medium"
                   >
-                    {createMutation.isPending || checkinMutation.isPending ? (
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                    ) : "Complete Registration"}
-                  </Button>
-                </form>
+                    Register here
+                  </button>
+                </p>
               </div>
             )}
 
@@ -246,27 +166,37 @@ export default function Checkin() {
                 <div className="mx-auto h-24 w-24 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
                   <CheckCircle2 className="h-12 w-12 text-emerald-600" />
                 </div>
-                
+
                 <div className="space-y-2">
                   <h2 className="text-3xl font-bold text-zinc-900">Welcome, {tokenResult.name}</h2>
                   <p className="text-xl text-zinc-500">Position: {tokenResult.position}</p>
                 </div>
-                
+
                 <div className="bg-zinc-50 p-8 rounded-3xl border-2 border-zinc-100 my-8">
                   <p className="text-sm font-bold text-zinc-400 uppercase tracking-widest mb-4">Your Token Number</p>
                   <div className="text-8xl font-bold text-primary tracking-tighter">{tokenResult.tokenNo}</div>
                 </div>
-                
-                <p className="text-lg text-zinc-500 mb-8">Please take a seat. Watch the TV screen for your turn.</p>
-                
-                <Button 
+
+                <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-5 flex items-start gap-4 text-left">
+                  <Camera className="h-8 w-8 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-amber-800 text-lg">Take a Screenshot!</p>
+                    <p className="text-amber-700 mt-1">Please photograph or screenshot your token number <strong>{tokenResult.tokenNo}</strong> so you don't lose your place in the queue.</p>
+                  </div>
+                </div>
+
+                <p className="text-lg text-zinc-500">Please take a seat. Watch the TV screen for your turn.</p>
+
+                <Button
                   onClick={resetForm}
                   className="h-14 px-8 text-lg font-bold rounded-xl"
                   variant="outline"
                 >
                   Done
                 </Button>
-                <p className="text-sm text-zinc-400 mt-4">Screen will auto-reset in 10 seconds</p>
+                <p className="text-sm text-zinc-400 mt-4">
+                  Screen resets in <span className="font-bold text-zinc-600">{countdown}s</span>
+                </p>
               </div>
             )}
           </CardContent>

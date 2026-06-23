@@ -7,6 +7,7 @@ export const interviewTablesTable = pgTable("interview_tables", {
   tableNo: integer("table_no").notNull().unique(),
   interviewerName: text("interviewer_name"),
   department: text("department"),
+  positions: text("positions"),
   status: text("status").notNull().default("AVAILABLE"),
   currentCandidateId: integer("current_candidate_id"),
   currentSessionId: integer("current_session_id"),

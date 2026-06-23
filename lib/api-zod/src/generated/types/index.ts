@@ -32,6 +32,8 @@ export * from './operationResult';
 export * from './positionStat';
 export * from './sessionResult';
 export * from './sessionResultResult';
+export * from './sitePosition';
+export * from './sitePositionInput';
 export * from './tableInput';
 export * from './tableUpdate';
 export * from './token';

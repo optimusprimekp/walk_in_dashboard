@@ -14,6 +14,11 @@ export interface InterviewTable {
   interviewerName?: string | null;
   /** @nullable */
   department?: string | null;
+  /**
+     * JSON array of position names this table handles (empty = all positions)
+     * @nullable
+     */
+  positions?: string | null;
   status: InterviewTableStatus;
   /** @nullable */
   currentCandidateId?: number | null;

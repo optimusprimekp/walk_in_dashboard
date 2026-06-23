@@ -10,5 +10,7 @@ export interface TableInput {
   tableNo: number;
   interviewerName?: string;
   department?: string;
+  /** JSON array of position names this table handles */
+  positions?: string;
   status?: string;
 }

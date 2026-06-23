@@ -87,8 +87,9 @@ router.post("/sessions/:id/start", requireAuth, async (req, res) => {
 router.post("/sessions/:id/end", requireAuth, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const { result, remarks } = req.body;
+    const { result, remarks, selectedSite, selectedPosition, currentCtc, negotiatedCtc } = req.body;
     if (!result) return res.status(400).json({ error: "result required" });
+    if (!remarks || !remarks.trim()) return res.status(400).json({ error: "remarks required — please add a comment before ending the session" });
     const now = new Date();
     const [existing] = await db
       .select()
@@ -101,14 +102,33 @@ router.post("/sessions/:id/end", requireAuth, async (req, res) => {
 
     const [session] = await db
       .update(interviewSessionsTable)
-      .set({ status: "COMPLETED", endTime: now, duration, result, remarks })
+      .set({
+        status: "COMPLETED",
+        endTime: now,
+        duration,
+        result,
+        remarks,
+        selectedSite: selectedSite || null,
+        selectedPosition: selectedPosition || null,
+        currentCtc: currentCtc || null,
+        negotiatedCtc: negotiatedCtc || null,
+      })
       .where(eq(interviewSessionsTable.id, id))
       .returning();
 
     const candidateStatus = result === "SELECTED" ? "SELECTED" : result === "REJECTED" ? "REJECTED" : "ON_HOLD";
+    const candidateUpdate: Record<string, unknown> = { status: candidateStatus };
+    if (remarks) candidateUpdate.remarks = remarks;
+    if (result === "SELECTED") {
+      if (selectedSite) candidateUpdate.selectedSite = selectedSite;
+      if (selectedPosition) candidateUpdate.selectedPosition = selectedPosition;
+      if (currentCtc) candidateUpdate.currentCtc = currentCtc;
+      if (negotiatedCtc) candidateUpdate.negotiatedCtc = negotiatedCtc;
+    }
+
     await db
       .update(candidatesTable)
-      .set({ status: candidateStatus })
+      .set(candidateUpdate)
       .where(eq(candidatesTable.id, session.candidateId));
 
     await db
@@ -128,7 +148,7 @@ router.post("/sessions/:id/end", requireAuth, async (req, res) => {
 
     setTimeout(() => {
       autoAssignToken().catch((e) => logger.error({ err: e }, "Auto assign after session end error"));
-    }, 5000);
+    }, 2000);
 
     res.json(await enrichSession(session));
   } catch (err) {

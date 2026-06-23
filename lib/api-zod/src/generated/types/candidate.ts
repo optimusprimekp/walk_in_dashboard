@@ -24,6 +24,16 @@ export interface Candidate {
   /** @nullable */
   currentDesignation?: string | null;
   /** @nullable */
+  currentCtc?: string | null;
+  /** @nullable */
+  negotiatedCtc?: string | null;
+  /** @nullable */
+  selectedSite?: string | null;
+  /** @nullable */
+  selectedPosition?: string | null;
+  /** @nullable */
+  remarks?: string | null;
+  /** @nullable */
   resumeUrl?: string | null;
   status: CandidateStatus;
   /** @nullable */

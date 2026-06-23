@@ -72,6 +72,16 @@ export interface Candidate {
   /** @nullable */
   currentDesignation?: string | null;
   /** @nullable */
+  currentCtc?: string | null;
+  /** @nullable */
+  negotiatedCtc?: string | null;
+  /** @nullable */
+  selectedSite?: string | null;
+  /** @nullable */
+  selectedPosition?: string | null;
+  /** @nullable */
+  remarks?: string | null;
+  /** @nullable */
   resumeUrl?: string | null;
   status: CandidateStatus;
   /** @nullable */
@@ -187,6 +197,11 @@ export interface InterviewTable {
   interviewerName?: string | null;
   /** @nullable */
   department?: string | null;
+  /**
+     * JSON array of position names this table handles (empty = all positions)
+     * @nullable
+     */
+  positions?: string | null;
   status: InterviewTableStatus;
   /** @nullable */
   currentCandidateId?: number | null;
@@ -204,6 +219,8 @@ export interface TableInput {
   tableNo: number;
   interviewerName?: string;
   department?: string;
+  /** JSON array of position names this table handles */
+  positions?: string;
   status?: string;
 }
 
@@ -211,6 +228,8 @@ export interface TableUpdate {
   tableNo?: number;
   interviewerName?: string;
   department?: string;
+  /** JSON array of position names this table handles */
+  positions?: string;
   status?: string;
 }
 
@@ -254,6 +273,14 @@ export interface InterviewSession {
   result?: InterviewSessionResult;
   /** @nullable */
   remarks?: string | null;
+  /** @nullable */
+  selectedSite?: string | null;
+  /** @nullable */
+  selectedPosition?: string | null;
+  /** @nullable */
+  currentCtc?: string | null;
+  /** @nullable */
+  negotiatedCtc?: string | null;
   createdAt: string;
 }
 
@@ -268,7 +295,11 @@ export const SessionResultResult = {
 
 export interface SessionResult {
   result: SessionResultResult;
-  remarks?: string;
+  remarks: string;
+  selectedSite?: string;
+  selectedPosition?: string;
+  currentCtc?: string;
+  negotiatedCtc?: string;
 }
 
 export interface DashboardStats {
@@ -309,6 +340,20 @@ export interface Announcement {
   tableNo: number;
   candidateName: string;
   timestamp: string;
+}
+
+export interface SitePosition {
+  id: number;
+  site: string;
+  position: string;
+  openings: number;
+  createdAt: string;
+}
+
+export interface SitePositionInput {
+  site: string;
+  position: string;
+  openings: number;
 }
 
 export interface OperationResult {

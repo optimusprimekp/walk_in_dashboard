@@ -4,60 +4,84 @@ import { eq, and } from "drizzle-orm";
 import { logger } from "../lib/logger";
 
 export async function autoAssignToken(): Promise<void> {
-  const [availableTable] = await db
+  const availableTables = await db
     .select()
     .from(interviewTablesTable)
-    .where(eq(interviewTablesTable.status, "AVAILABLE"))
-    .limit(1);
-  if (!availableTable) return;
+    .where(eq(interviewTablesTable.status, "AVAILABLE"));
 
-  const [waitingToken] = await db
-    .select()
+  if (availableTables.length === 0) return;
+
+  const waitingTokens = await db
+    .select({
+      token: tokenQueueTable,
+      candidate: candidatesTable,
+    })
     .from(tokenQueueTable)
+    .innerJoin(candidatesTable, eq(tokenQueueTable.candidateId, candidatesTable.id))
     .where(eq(tokenQueueTable.status, "WAITING"))
-    .orderBy(tokenQueueTable.queuePosition)
-    .limit(1);
-  if (!waitingToken) return;
+    .orderBy(tokenQueueTable.queuePosition);
 
-  await db
-    .update(tokenQueueTable)
-    .set({ status: "ASSIGNED", assignedTableId: availableTable.id })
-    .where(eq(tokenQueueTable.id, waitingToken.id));
+  if (waitingTokens.length === 0) return;
 
-  await db
-    .update(candidatesTable)
-    .set({ status: "ASSIGNED", assignedTableId: availableTable.id })
-    .where(eq(candidatesTable.id, waitingToken.candidateId));
+  let assigned = false;
 
-  const [session] = await db
-    .insert(interviewSessionsTable)
-    .values({
-      candidateId: waitingToken.candidateId,
-      tableId: availableTable.id,
+  for (const availableTable of availableTables) {
+    let tablePositions: string[] = [];
+    try {
+      if (availableTable.positions) {
+        tablePositions = JSON.parse(availableTable.positions) as string[];
+      }
+    } catch {
+      tablePositions = [];
+    }
+
+    const matchingEntry = waitingTokens.find(({ candidate }) => {
+      if (tablePositions.length === 0) return true;
+      return tablePositions.some(
+        (p) => p.toLowerCase() === (candidate.position || "").toLowerCase()
+      );
+    });
+
+    if (!matchingEntry) continue;
+
+    const { token: waitingToken, candidate } = matchingEntry;
+
+    await db
+      .update(tokenQueueTable)
+      .set({ status: "ASSIGNED", assignedTableId: availableTable.id })
+      .where(eq(tokenQueueTable.id, waitingToken.id));
+
+    await db
+      .update(candidatesTable)
+      .set({ status: "ASSIGNED", assignedTableId: availableTable.id })
+      .where(eq(candidatesTable.id, waitingToken.candidateId));
+
+    const [session] = await db
+      .insert(interviewSessionsTable)
+      .values({
+        candidateId: waitingToken.candidateId,
+        tableId: availableTable.id,
+        tokenNo: waitingToken.tokenNo,
+        status: "PENDING",
+      })
+      .returning();
+
+    await db
+      .update(interviewTablesTable)
+      .set({
+        status: "BUSY",
+        currentCandidateId: waitingToken.candidateId,
+        currentSessionId: session.id,
+      })
+      .where(eq(interviewTablesTable.id, availableTable.id));
+
+    await db.insert(announcementsTable).values({
       tokenNo: waitingToken.tokenNo,
-      status: "PENDING",
-    })
-    .returning();
+      tableNo: availableTable.tableNo,
+      candidateName: candidate?.name ?? "Unknown",
+    });
 
-  await db
-    .update(interviewTablesTable)
-    .set({
-      status: "BUSY",
-      currentCandidateId: waitingToken.candidateId,
-      currentSessionId: session.id,
-    })
-    .where(eq(interviewTablesTable.id, availableTable.id));
-
-  const [candidate] = await db
-    .select()
-    .from(candidatesTable)
-    .where(eq(candidatesTable.id, waitingToken.candidateId));
-
-  await db.insert(announcementsTable).values({
-    tokenNo: waitingToken.tokenNo,
-    tableNo: availableTable.tableNo,
-    candidateName: candidate?.name ?? "Unknown",
-  });
-
-  logger.info({ tokenNo: waitingToken.tokenNo, tableNo: availableTable.tableNo }, "Token auto-assigned");
+    logger.info({ tokenNo: waitingToken.tokenNo, tableNo: availableTable.tableNo }, "Token auto-assigned");
+    assigned = true;
+  }
 }

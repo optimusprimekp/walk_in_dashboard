@@ -69,6 +69,11 @@ export const ListCandidatesResponseItem = zod.object({
   "experience": zod.string().nullish(),
   "currentCompany": zod.string().nullish(),
   "currentDesignation": zod.string().nullish(),
+  "currentCtc": zod.string().nullish(),
+  "negotiatedCtc": zod.string().nullish(),
+  "selectedSite": zod.string().nullish(),
+  "selectedPosition": zod.string().nullish(),
+  "remarks": zod.string().nullish(),
   "resumeUrl": zod.string().nullish(),
   "status": zod.enum(['PRE_REGISTERED', 'CHECKED_IN', 'WAITING', 'ASSIGNED', 'IN_INTERVIEW', 'COMPLETED', 'NO_SHOW', 'SELECTED', 'REJECTED', 'ON_HOLD']),
   "scheduledDate": zod.string().nullish(),
@@ -118,6 +123,11 @@ export const LookupCandidateResponse = zod.object({
   "experience": zod.string().nullish(),
   "currentCompany": zod.string().nullish(),
   "currentDesignation": zod.string().nullish(),
+  "currentCtc": zod.string().nullish(),
+  "negotiatedCtc": zod.string().nullish(),
+  "selectedSite": zod.string().nullish(),
+  "selectedPosition": zod.string().nullish(),
+  "remarks": zod.string().nullish(),
   "resumeUrl": zod.string().nullish(),
   "status": zod.enum(['PRE_REGISTERED', 'CHECKED_IN', 'WAITING', 'ASSIGNED', 'IN_INTERVIEW', 'COMPLETED', 'NO_SHOW', 'SELECTED', 'REJECTED', 'ON_HOLD']),
   "scheduledDate": zod.string().nullish(),
@@ -175,6 +185,11 @@ export const GetCandidateResponse = zod.object({
   "experience": zod.string().nullish(),
   "currentCompany": zod.string().nullish(),
   "currentDesignation": zod.string().nullish(),
+  "currentCtc": zod.string().nullish(),
+  "negotiatedCtc": zod.string().nullish(),
+  "selectedSite": zod.string().nullish(),
+  "selectedPosition": zod.string().nullish(),
+  "remarks": zod.string().nullish(),
   "resumeUrl": zod.string().nullish(),
   "status": zod.enum(['PRE_REGISTERED', 'CHECKED_IN', 'WAITING', 'ASSIGNED', 'IN_INTERVIEW', 'COMPLETED', 'NO_SHOW', 'SELECTED', 'REJECTED', 'ON_HOLD']),
   "scheduledDate": zod.string().nullish(),
@@ -218,6 +233,11 @@ export const UpdateCandidateResponse = zod.object({
   "experience": zod.string().nullish(),
   "currentCompany": zod.string().nullish(),
   "currentDesignation": zod.string().nullish(),
+  "currentCtc": zod.string().nullish(),
+  "negotiatedCtc": zod.string().nullish(),
+  "selectedSite": zod.string().nullish(),
+  "selectedPosition": zod.string().nullish(),
+  "remarks": zod.string().nullish(),
   "resumeUrl": zod.string().nullish(),
   "status": zod.enum(['PRE_REGISTERED', 'CHECKED_IN', 'WAITING', 'ASSIGNED', 'IN_INTERVIEW', 'COMPLETED', 'NO_SHOW', 'SELECTED', 'REJECTED', 'ON_HOLD']),
   "scheduledDate": zod.string().nullish(),
@@ -249,6 +269,11 @@ export const CheckinCandidateResponse = zod.object({
   "experience": zod.string().nullish(),
   "currentCompany": zod.string().nullish(),
   "currentDesignation": zod.string().nullish(),
+  "currentCtc": zod.string().nullish(),
+  "negotiatedCtc": zod.string().nullish(),
+  "selectedSite": zod.string().nullish(),
+  "selectedPosition": zod.string().nullish(),
+  "remarks": zod.string().nullish(),
   "resumeUrl": zod.string().nullish(),
   "status": zod.enum(['PRE_REGISTERED', 'CHECKED_IN', 'WAITING', 'ASSIGNED', 'IN_INTERVIEW', 'COMPLETED', 'NO_SHOW', 'SELECTED', 'REJECTED', 'ON_HOLD']),
   "scheduledDate": zod.string().nullish(),
@@ -372,6 +397,7 @@ export const ListTablesResponseItem = zod.object({
   "tableNo": zod.number(),
   "interviewerName": zod.string().nullish(),
   "department": zod.string().nullish(),
+  "positions": zod.string().nullish().describe('JSON array of position names this table handles (empty = all positions)'),
   "status": zod.enum(['AVAILABLE', 'BUSY', 'BREAK', 'OFFLINE']),
   "currentCandidateId": zod.number().nullish(),
   "currentCandidateName": zod.string().nullish(),
@@ -389,6 +415,7 @@ export const CreateTableBody = zod.object({
   "tableNo": zod.number(),
   "interviewerName": zod.string().optional(),
   "department": zod.string().optional(),
+  "positions": zod.string().optional().describe('JSON array of position names this table handles'),
   "status": zod.string().optional()
 })
 
@@ -404,6 +431,7 @@ export const UpdateTableBody = zod.object({
   "tableNo": zod.number().optional(),
   "interviewerName": zod.string().optional(),
   "department": zod.string().optional(),
+  "positions": zod.string().optional().describe('JSON array of position names this table handles'),
   "status": zod.string().optional()
 })
 
@@ -412,6 +440,7 @@ export const UpdateTableResponse = zod.object({
   "tableNo": zod.number(),
   "interviewerName": zod.string().nullish(),
   "department": zod.string().nullish(),
+  "positions": zod.string().nullish().describe('JSON array of position names this table handles (empty = all positions)'),
   "status": zod.enum(['AVAILABLE', 'BUSY', 'BREAK', 'OFFLINE']),
   "currentCandidateId": zod.number().nullish(),
   "currentCandidateName": zod.string().nullish(),
@@ -457,6 +486,10 @@ export const ListSessionsResponseItem = zod.object({
   "duration": zod.number().nullish(),
   "result": zod.union([zod.literal('SELECTED'),zod.literal('REJECTED'),zod.literal('ON_HOLD'),zod.literal(null)]).nullish(),
   "remarks": zod.string().nullish(),
+  "selectedSite": zod.string().nullish(),
+  "selectedPosition": zod.string().nullish(),
+  "currentCtc": zod.string().nullish(),
+  "negotiatedCtc": zod.string().nullish(),
   "createdAt": zod.string()
 })
 export const ListSessionsResponse = zod.array(ListSessionsResponseItem)
@@ -483,6 +516,10 @@ export const StartSessionResponse = zod.object({
   "duration": zod.number().nullish(),
   "result": zod.union([zod.literal('SELECTED'),zod.literal('REJECTED'),zod.literal('ON_HOLD'),zod.literal(null)]).nullish(),
   "remarks": zod.string().nullish(),
+  "selectedSite": zod.string().nullish(),
+  "selectedPosition": zod.string().nullish(),
+  "currentCtc": zod.string().nullish(),
+  "negotiatedCtc": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
@@ -496,7 +533,11 @@ export const EndSessionParams = zod.object({
 
 export const EndSessionBody = zod.object({
   "result": zod.enum(['SELECTED', 'REJECTED', 'ON_HOLD']),
-  "remarks": zod.string().optional()
+  "remarks": zod.string(),
+  "selectedSite": zod.string().optional(),
+  "selectedPosition": zod.string().optional(),
+  "currentCtc": zod.string().optional(),
+  "negotiatedCtc": zod.string().optional()
 })
 
 export const EndSessionResponse = zod.object({
@@ -513,6 +554,10 @@ export const EndSessionResponse = zod.object({
   "duration": zod.number().nullish(),
   "result": zod.union([zod.literal('SELECTED'),zod.literal('REJECTED'),zod.literal('ON_HOLD'),zod.literal(null)]).nullish(),
   "remarks": zod.string().nullish(),
+  "selectedSite": zod.string().nullish(),
+  "selectedPosition": zod.string().nullish(),
+  "currentCtc": zod.string().nullish(),
+  "negotiatedCtc": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
@@ -538,6 +583,10 @@ export const GetSessionResponse = zod.object({
   "duration": zod.number().nullish(),
   "result": zod.union([zod.literal('SELECTED'),zod.literal('REJECTED'),zod.literal('ON_HOLD'),zod.literal(null)]).nullish(),
   "remarks": zod.string().nullish(),
+  "selectedSite": zod.string().nullish(),
+  "selectedPosition": zod.string().nullish(),
+  "currentCtc": zod.string().nullish(),
+  "negotiatedCtc": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
@@ -583,6 +632,7 @@ export const GetTvDisplayResponse = zod.object({
   "tableNo": zod.number(),
   "interviewerName": zod.string().nullish(),
   "department": zod.string().nullish(),
+  "positions": zod.string().nullish().describe('JSON array of position names this table handles (empty = all positions)'),
   "status": zod.enum(['AVAILABLE', 'BUSY', 'BREAK', 'OFFLINE']),
   "currentCandidateId": zod.number().nullish(),
   "currentCandidateName": zod.string().nullish(),
@@ -638,6 +688,64 @@ export const GetPositionStatsResponseItem = zod.object({
   "count": zod.number()
 })
 export const GetPositionStatsResponse = zod.array(GetPositionStatsResponseItem)
+
+
+/**
+ * @summary List all site positions and openings
+ */
+export const ListSitePositionsResponseItem = zod.object({
+  "id": zod.number(),
+  "site": zod.string(),
+  "position": zod.string(),
+  "openings": zod.number(),
+  "createdAt": zod.string()
+})
+export const ListSitePositionsResponse = zod.array(ListSitePositionsResponseItem)
+
+
+/**
+ * @summary Create a site position opening
+ */
+export const CreateSitePositionBody = zod.object({
+  "site": zod.string(),
+  "position": zod.string(),
+  "openings": zod.number()
+})
+
+
+/**
+ * @summary Update a site position opening count
+ */
+export const UpdateSitePositionParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateSitePositionBody = zod.object({
+  "site": zod.string(),
+  "position": zod.string(),
+  "openings": zod.number()
+})
+
+export const UpdateSitePositionResponse = zod.object({
+  "id": zod.number(),
+  "site": zod.string(),
+  "position": zod.string(),
+  "openings": zod.number(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Delete a site position
+ */
+export const DeleteSitePositionParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteSitePositionResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string()
+})
 
 
 /**

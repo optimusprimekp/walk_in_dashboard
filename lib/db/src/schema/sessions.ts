@@ -13,6 +13,10 @@ export const interviewSessionsTable = pgTable("interview_sessions", {
   duration: integer("duration"),
   result: text("result"),
   remarks: text("remarks"),
+  selectedSite: text("selected_site"),
+  selectedPosition: text("selected_position"),
+  currentCtc: text("current_ctc"),
+  negotiatedCtc: text("negotiated_ctc"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

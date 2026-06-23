@@ -9,5 +9,9 @@ import type { SessionResultResult } from './sessionResultResult';
 
 export interface SessionResult {
   result: SessionResultResult;
-  remarks?: string;
+  remarks: string;
+  selectedSite?: string;
+  selectedPosition?: string;
+  currentCtc?: string;
+  negotiatedCtc?: string;
 }

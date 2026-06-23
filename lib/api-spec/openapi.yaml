@@ -21,6 +21,8 @@ tags:
     description: Dashboard analytics
   - name: auth
     description: Authentication
+  - name: sitePositions
+    description: Site and position openings management
 
 paths:
   /healthz:
@@ -535,6 +537,80 @@ paths:
                 items:
                   $ref: "#/components/schemas/PositionStat"
 
+  /site-positions:
+    get:
+      operationId: listSitePositions
+      tags: [sitePositions]
+      summary: List all site positions and openings
+      responses:
+        "200":
+          description: Site positions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SitePosition"
+    post:
+      operationId: createSitePosition
+      tags: [sitePositions]
+      summary: Create a site position opening
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SitePositionInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SitePosition"
+
+  /site-positions/{id}:
+    patch:
+      operationId: updateSitePosition
+      tags: [sitePositions]
+      summary: Update a site position opening count
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SitePositionInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SitePosition"
+    delete:
+      operationId: deleteSitePosition
+      tags: [sitePositions]
+      summary: Delete a site position
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+
   /dashboard/announcements:
     get:
       operationId: getAnnouncements
@@ -616,6 +692,16 @@ components:
         currentCompany:
           type: ["string", "null"]
         currentDesignation:
+          type: ["string", "null"]
+        currentCtc:
+          type: ["string", "null"]
+        negotiatedCtc:
+          type: ["string", "null"]
+        selectedSite:
+          type: ["string", "null"]
+        selectedPosition:
+          type: ["string", "null"]
+        remarks:
           type: ["string", "null"]
         resumeUrl:
           type: ["string", "null"]
@@ -779,6 +865,9 @@ components:
           type: ["string", "null"]
         department:
           type: ["string", "null"]
+        positions:
+          type: ["string", "null"]
+          description: JSON array of position names this table handles (empty = all positions)
         status:
           type: string
           enum: [AVAILABLE, BUSY, BREAK, OFFLINE]
@@ -803,6 +892,9 @@ components:
           type: string
         department:
           type: string
+        positions:
+          type: string
+          description: JSON array of position names this table handles
         status:
           type: string
 
@@ -815,6 +907,9 @@ components:
           type: string
         department:
           type: string
+        positions:
+          type: string
+          description: JSON array of position names this table handles
         status:
           type: string
 
@@ -850,17 +945,33 @@ components:
           enum: [SELECTED, REJECTED, ON_HOLD, null]
         remarks:
           type: ["string", "null"]
+        selectedSite:
+          type: ["string", "null"]
+        selectedPosition:
+          type: ["string", "null"]
+        currentCtc:
+          type: ["string", "null"]
+        negotiatedCtc:
+          type: ["string", "null"]
         createdAt:
           type: string
 
     SessionResult:
       type: object
-      required: [result]
+      required: [result, remarks]
       properties:
         result:
           type: string
           enum: [SELECTED, REJECTED, ON_HOLD]
         remarks:
+          type: string
+        selectedSite:
+          type: string
+        selectedPosition:
+          type: string
+        currentCtc:
+          type: string
+        negotiatedCtc:
           type: string
 
     DashboardStats:
@@ -943,6 +1054,32 @@ components:
           type: string
         timestamp:
           type: string
+
+    SitePosition:
+      type: object
+      required: [id, site, position, openings, createdAt]
+      properties:
+        id:
+          type: integer
+        site:
+          type: string
+        position:
+          type: string
+        openings:
+          type: integer
+        createdAt:
+          type: string
+
+    SitePositionInput:
+      type: object
+      required: [site, position, openings]
+      properties:
+        site:
+          type: string
+        position:
+          type: string
+        openings:
+          type: integer
 
     OperationResult:
       type: object

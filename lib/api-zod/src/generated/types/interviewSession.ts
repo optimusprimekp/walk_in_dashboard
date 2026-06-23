@@ -27,5 +27,13 @@ export interface InterviewSession {
   result?: InterviewSessionResult;
   /** @nullable */
   remarks?: string | null;
+  /** @nullable */
+  selectedSite?: string | null;
+  /** @nullable */
+  selectedPosition?: string | null;
+  /** @nullable */
+  currentCtc?: string | null;
+  /** @nullable */
+  negotiatedCtc?: string | null;
   createdAt: string;
 }

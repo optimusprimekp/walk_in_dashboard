@@ -41,6 +41,8 @@ import type {
   OperationResult,
   PositionStat,
   SessionResult,
+  SitePosition,
+  SitePositionInput,
   TableInput,
   TableUpdate,
   Token,
@@ -2075,6 +2077,296 @@ export function useGetPositionStats<TData = Awaited<ReturnType<typeof getPositio
 
 
 
+
+export const getListSitePositionsUrl = () => {
+
+
+
+
+  return `/api/site-positions`
+}
+
+/**
+ * @summary List all site positions and openings
+ */
+export const listSitePositions = async ( options?: RequestInit): Promise<SitePosition[]> => {
+
+  return customFetch<SitePosition[]>(getListSitePositionsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListSitePositionsQueryKey = () => {
+    return [
+    `/api/site-positions`
+    ] as const;
+    }
+
+
+export const getListSitePositionsQueryOptions = <TData = Awaited<ReturnType<typeof listSitePositions>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSitePositions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSitePositionsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSitePositions>>> = ({ signal }) => listSitePositions({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSitePositions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListSitePositionsQueryResult = NonNullable<Awaited<ReturnType<typeof listSitePositions>>>
+export type ListSitePositionsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all site positions and openings
+ */
+
+export function useListSitePositions<TData = Awaited<ReturnType<typeof listSitePositions>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSitePositions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListSitePositionsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateSitePositionUrl = () => {
+
+
+
+
+  return `/api/site-positions`
+}
+
+/**
+ * @summary Create a site position opening
+ */
+export const createSitePosition = async (sitePositionInput: SitePositionInput, options?: RequestInit): Promise<SitePosition> => {
+
+  return customFetch<SitePosition>(getCreateSitePositionUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      sitePositionInput,)
+  }
+);}
+
+
+
+
+export const getCreateSitePositionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSitePosition>>, TError,{data: BodyType<SitePositionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createSitePosition>>, TError,{data: BodyType<SitePositionInput>}, TContext> => {
+
+const mutationKey = ['createSitePosition'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSitePosition>>, {data: BodyType<SitePositionInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createSitePosition(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateSitePositionMutationResult = NonNullable<Awaited<ReturnType<typeof createSitePosition>>>
+    export type CreateSitePositionMutationBody = BodyType<SitePositionInput>
+    export type CreateSitePositionMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a site position opening
+ */
+export const useCreateSitePosition = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSitePosition>>, TError,{data: BodyType<SitePositionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createSitePosition>>,
+        TError,
+        {data: BodyType<SitePositionInput>},
+        TContext
+      > => {
+      return useMutation(getCreateSitePositionMutationOptions(options));
+    }
+
+export const getUpdateSitePositionUrl = (id: number,) => {
+
+
+
+
+  return `/api/site-positions/${id}`
+}
+
+/**
+ * @summary Update a site position opening count
+ */
+export const updateSitePosition = async (id: number,
+    sitePositionInput: SitePositionInput, options?: RequestInit): Promise<SitePosition> => {
+
+  return customFetch<SitePosition>(getUpdateSitePositionUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      sitePositionInput,)
+  }
+);}
+
+
+
+
+export const getUpdateSitePositionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSitePosition>>, TError,{id: number;data: BodyType<SitePositionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSitePosition>>, TError,{id: number;data: BodyType<SitePositionInput>}, TContext> => {
+
+const mutationKey = ['updateSitePosition'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSitePosition>>, {id: number;data: BodyType<SitePositionInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateSitePosition(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateSitePositionMutationResult = NonNullable<Awaited<ReturnType<typeof updateSitePosition>>>
+    export type UpdateSitePositionMutationBody = BodyType<SitePositionInput>
+    export type UpdateSitePositionMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update a site position opening count
+ */
+export const useUpdateSitePosition = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSitePosition>>, TError,{id: number;data: BodyType<SitePositionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateSitePosition>>,
+        TError,
+        {id: number;data: BodyType<SitePositionInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateSitePositionMutationOptions(options));
+    }
+
+export const getDeleteSitePositionUrl = (id: number,) => {
+
+
+
+
+  return `/api/site-positions/${id}`
+}
+
+/**
+ * @summary Delete a site position
+ */
+export const deleteSitePosition = async (id: number, options?: RequestInit): Promise<OperationResult> => {
+
+  return customFetch<OperationResult>(getDeleteSitePositionUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteSitePositionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSitePosition>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteSitePosition>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteSitePosition'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSitePosition>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteSitePosition(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteSitePositionMutationResult = NonNullable<Awaited<ReturnType<typeof deleteSitePosition>>>
+
+    export type DeleteSitePositionMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a site position
+ */
+export const useDeleteSitePosition = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSitePosition>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteSitePosition>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteSitePositionMutationOptions(options));
+    }
 
 export const getGetAnnouncementsUrl = () => {
 
