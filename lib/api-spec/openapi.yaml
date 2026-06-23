@@ -613,6 +613,10 @@ components:
           type: string
         experience:
           type: ["string", "null"]
+        currentCompany:
+          type: ["string", "null"]
+        currentDesignation:
+          type: ["string", "null"]
         resumeUrl:
           type: ["string", "null"]
         status:

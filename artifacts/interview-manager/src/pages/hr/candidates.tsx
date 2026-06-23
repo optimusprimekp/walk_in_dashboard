@@ -17,6 +17,8 @@ type ParsedRow = {
   email: string;
   position: string;
   experience?: string;
+  currentCompany?: string;
+  currentDesignation?: string;
   location?: string;
 };
 
@@ -33,7 +35,7 @@ function PreviewTable({ rows }: { rows: ParsedRow[] }) {
             <span className="text-amber-600 ml-2">({invalid.length} missing required fields — will be skipped)</span>
           )}
         </p>
-        <p className="text-zinc-400">Required: Name, Mobile, Email, Position</p>
+        <p className="text-zinc-400">Required: Full Name, Email, Phone Number, Current Designation</p>
       </div>
       <div className="rounded-xl border border-zinc-200 overflow-hidden">
         <div className="overflow-auto max-h-60">
@@ -41,9 +43,11 @@ function PreviewTable({ rows }: { rows: ParsedRow[] }) {
             <TableHeader className="bg-zinc-50">
               <TableRow>
                 <TableHead className="font-semibold">Name</TableHead>
-                <TableHead className="font-semibold">Mobile</TableHead>
+                <TableHead className="font-semibold">Phone</TableHead>
                 <TableHead className="font-semibold">Email</TableHead>
-                <TableHead className="font-semibold">Position</TableHead>
+                <TableHead className="font-semibold">Designation</TableHead>
+                <TableHead className="font-semibold">Company</TableHead>
+                <TableHead className="font-semibold">Experience</TableHead>
                 <TableHead className="font-semibold">Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -54,8 +58,10 @@ function PreviewTable({ rows }: { rows: ParsedRow[] }) {
                   <TableRow key={i} className={bad ? "bg-amber-50" : ""}>
                     <TableCell className="font-medium">{row.name || <span className="text-destructive text-xs">missing</span>}</TableCell>
                     <TableCell>{row.mobile || <span className="text-destructive text-xs">missing</span>}</TableCell>
-                    <TableCell className="text-xs text-zinc-500 max-w-[140px] truncate">{row.email || <span className="text-destructive text-xs">missing</span>}</TableCell>
+                    <TableCell className="text-xs text-zinc-500 max-w-[120px] truncate">{row.email || <span className="text-destructive text-xs">missing</span>}</TableCell>
                     <TableCell>{row.position || <span className="text-destructive text-xs">missing</span>}</TableCell>
+                    <TableCell className="text-zinc-500 text-sm">{row.currentCompany || '—'}</TableCell>
+                    <TableCell className="text-zinc-500 text-sm">{row.experience || '—'}</TableCell>
                     <TableCell>
                       {bad
                         ? <Badge variant="outline" className="border-amber-300 text-amber-700 bg-amber-50 text-xs">Skip</Badge>
@@ -66,7 +72,7 @@ function PreviewTable({ rows }: { rows: ParsedRow[] }) {
               })}
               {rows.length > 50 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-zinc-400 text-sm py-3">
+                  <TableCell colSpan={7} className="text-center text-zinc-400 text-sm py-3">
                     … and {rows.length - 50} more rows
                   </TableCell>
                 </TableRow>
@@ -114,12 +120,14 @@ function ImportModal({ onClose }: { onClose: () => void }) {
           return "";
         };
         const parsed: ParsedRow[] = json.map((row) => ({
-          name: normalize(row, ["name", "full name", "candidate name"]),
-          mobile: normalize(row, ["mobile", "phone", "contact", "mobile number", "phone number"]),
-          email: normalize(row, ["email", "email address", "mail"]),
-          position: normalize(row, ["position", "role", "job title", "applied for"]),
-          experience: normalize(row, ["experience", "exp", "years"]) || undefined,
-          location: normalize(row, ["location", "city", "place"]) || undefined,
+          name: normalize(row, ["name", "full name", "candidate name", "candidate"]),
+          mobile: normalize(row, ["mobile", "phone", "contact", "mobile number", "phone number", "mobile no", "phone no"]),
+          email: normalize(row, ["email", "email address", "mail", "e-mail"]),
+          position: normalize(row, ["position", "role", "job title", "applied for", "post", "current designation"]),
+          experience: normalize(row, ["experience", "exp", "years", "total experience", "years of experience"]) || undefined,
+          currentCompany: normalize(row, ["current company", "company", "organisation", "organization", "employer"]) || undefined,
+          currentDesignation: normalize(row, ["current designation", "designation", "current role", "current title"]) || undefined,
+          location: normalize(row, ["location", "city", "place", "current location"]) || undefined,
         })).filter(r => r.name || r.mobile || r.email);
         if (parsed.length === 0) { setParseError("No rows found. Make sure your sheet has columns: Name, Mobile, Email, Position."); return; }
         setRows(parsed);
@@ -384,10 +392,10 @@ export default function Candidates() {
               <Table>
                 <TableHeader className="bg-zinc-50 border-b border-zinc-200">
                   <TableRow>
-                    <TableHead className="w-28 font-semibold">Ref ID</TableHead>
-                    <TableHead className="w-24 font-semibold">Token</TableHead>
+                    <TableHead className="w-24 font-semibold">Ref ID</TableHead>
+                    <TableHead className="w-20 font-semibold">Token</TableHead>
                     <TableHead className="font-semibold">Candidate</TableHead>
-                    <TableHead className="font-semibold">Position</TableHead>
+                    <TableHead className="font-semibold">Current Role</TableHead>
                     <TableHead className="font-semibold">Contact</TableHead>
                     <TableHead className="font-semibold">Status</TableHead>
                   </TableRow>
@@ -410,9 +418,13 @@ export default function Candidates() {
                         </TableCell>
                         <TableCell>
                           <div className="font-medium text-zinc-900">{candidate.name}</div>
-                          <div className="text-xs text-zinc-500">{candidate.experience || 'Fresher'}</div>
+                          <div className="text-xs text-zinc-400">{candidate.location || ''}</div>
                         </TableCell>
-                        <TableCell className="text-zinc-600">{candidate.position}</TableCell>
+                        <TableCell>
+                          <div className="text-sm text-zinc-700">{candidate.currentDesignation || candidate.position}</div>
+                          <div className="text-xs text-zinc-400">{candidate.currentCompany || ''}</div>
+                          <div className="text-xs text-zinc-400">{candidate.experience ? `${candidate.experience} exp` : ''}</div>
+                        </TableCell>
                         <TableCell>
                           <div className="text-sm text-zinc-900">{candidate.mobile}</div>
                           <div className="text-xs text-zinc-500 truncate max-w-[150px]">{candidate.email}</div>

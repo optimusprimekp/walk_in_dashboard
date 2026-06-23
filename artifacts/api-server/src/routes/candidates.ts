@@ -59,14 +59,14 @@ router.get("/candidates", requireAuth, async (req: any, res) => {
 
 router.post("/candidates", requireAuth, async (req, res) => {
   try {
-    const { name, mobile, email, position, experience, location, scheduledDate, status } = req.body;
+    const { name, mobile, email, position, experience, currentCompany, currentDesignation, location, scheduledDate, status } = req.body;
     if (!name || !mobile || !email || !position) {
       return res.status(400).json({ error: "name, mobile, email, position required" });
     }
     const candidateRef = generateCandidateRef(email, mobile);
     const [candidate] = await db
       .insert(candidatesTable)
-      .values({ candidateRef, name, mobile, email, position, experience, location, scheduledDate, status: status || "PRE_REGISTERED" })
+      .values({ candidateRef, name, mobile, email, position, experience, currentCompany, currentDesignation, location, scheduledDate, status: status || "PRE_REGISTERED" })
       .returning();
     res.status(201).json({ ...candidate, assignedTableNo: null });
   } catch (err) {
@@ -128,6 +128,8 @@ router.post("/candidates/import", requireAuth, async (req, res) => {
           email: c.email,
           position: c.position,
           experience: c.experience,
+          currentCompany: c.currentCompany,
+          currentDesignation: c.currentDesignation,
           location: c.location,
           scheduledDate: scheduledDate || c.scheduledDate,
           status: "PRE_REGISTERED",
@@ -202,11 +204,13 @@ router.get("/candidates/fetch-sheet", requireAuth, async (req, res) => {
       headers.forEach((h, i) => { row[h] = (cells[i] || "").trim().replace(/^"|"$/g, ""); });
       return {
         name: pick(row, ["name", "full name", "candidate name", "candidate"]),
-        mobile: pick(row, ["mobile", "phone", "contact", "mobile number", "phone number", "mobile no"]),
+        mobile: pick(row, ["mobile", "phone", "contact", "mobile number", "phone number", "mobile no", "phone no"]),
         email: pick(row, ["email", "email address", "mail", "e-mail"]),
-        position: pick(row, ["position", "role", "job title", "applied for", "post"]),
-        experience: pick(row, ["experience", "exp", "years", "years of experience"]) || undefined,
-        location: pick(row, ["location", "city", "place"]) || undefined,
+        position: pick(row, ["position", "role", "job title", "applied for", "post", "current designation"]),
+        experience: pick(row, ["experience", "exp", "years", "years of experience", "total experience"]) || undefined,
+        currentCompany: pick(row, ["current company", "company", "organisation", "organization", "employer"]) || undefined,
+        currentDesignation: pick(row, ["current designation", "designation", "current role", "current title"]) || undefined,
+        location: pick(row, ["location", "city", "place", "current location"]) || undefined,
       };
     }).filter((r) => r.name || r.mobile || r.email);
 

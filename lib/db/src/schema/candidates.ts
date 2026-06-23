@@ -11,6 +11,8 @@ export const candidatesTable = pgTable("candidates", {
   email: text("email").notNull(),
   position: text("position").notNull(),
   experience: text("experience"),
+  currentCompany: text("current_company"),
+  currentDesignation: text("current_designation"),
   resumeUrl: text("resume_url"),
   status: text("status").notNull().default("PRE_REGISTERED"),
   scheduledDate: date("scheduled_date", { mode: "string" }),

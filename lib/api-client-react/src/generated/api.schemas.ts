@@ -68,6 +68,10 @@ export interface Candidate {
   /** @nullable */
   experience?: string | null;
   /** @nullable */
+  currentCompany?: string | null;
+  /** @nullable */
+  currentDesignation?: string | null;
+  /** @nullable */
   resumeUrl?: string | null;
   status: CandidateStatus;
   /** @nullable */
