@@ -82,8 +82,18 @@ router.post("/candidates/lookup", async (req, res) => {
       return res.status(400).json({ error: "Provide mobile or email" });
     }
     const conditions = [];
-    if (mobile) conditions.push(eq(candidatesTable.mobile, mobile));
-    if (email) conditions.push(eq(candidatesTable.email, email));
+    if (mobile) {
+      const digits = mobile.replace(/\D/g, "");
+      // Try exact, with 91 prefix, and without 91 prefix
+      const variants = new Set([digits, `91${digits}`, digits.startsWith("91") ? digits.slice(2) : digits]);
+      for (const v of variants) {
+        conditions.push(eq(candidatesTable.mobile, v));
+      }
+    }
+    if (email) {
+      // Case-insensitive email match
+      conditions.push(ilike(candidatesTable.email, email.trim()));
+    }
     const [candidate] = await db
       .select()
       .from(candidatesTable)
