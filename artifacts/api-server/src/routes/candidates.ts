@@ -145,6 +145,78 @@ router.post("/candidates/import", requireAuth, async (req, res) => {
   }
 });
 
+function parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let inQuotes = false;
+  let current = "";
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (ch === "," && !inQuotes) {
+      result.push(current);
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+router.get("/candidates/fetch-sheet", requireAuth, async (req, res) => {
+  const { url } = req.query as { url: string };
+  if (!url) return res.status(400).json({ error: "url required" });
+
+  const match = url.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (!match) return res.status(400).json({ error: "Invalid Google Sheets URL. Copy the share link from File → Share." });
+
+  const sheetId = match[1];
+  const gidMatch = url.match(/[#&?]gid=(\d+)/);
+  const gidParam = gidMatch ? `&gid=${gidMatch[1]}` : "";
+  const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv${gidParam}`;
+
+  try {
+    const response = await fetch(csvUrl, { redirect: "follow" });
+    if (!response.ok) {
+      return res.status(400).json({ error: "Could not fetch sheet. Make sure it is shared with 'Anyone with the link can view'." });
+    }
+    const csvText = await response.text();
+    const lines = csvText.split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) return res.json({ rows: [], total: 0 });
+
+    const headers = parseCSVLine(lines[0]).map((h) => h.toLowerCase().trim().replace(/^"|"$/g, ""));
+
+    const pick = (row: Record<string, string>, keys: string[]): string => {
+      for (const k of keys) {
+        const found = Object.keys(row).find((rk) => rk === k);
+        if (found && row[found]) return row[found].trim();
+      }
+      return "";
+    };
+
+    const rows = lines.slice(1).map((line) => {
+      const cells = parseCSVLine(line);
+      const row: Record<string, string> = {};
+      headers.forEach((h, i) => { row[h] = (cells[i] || "").trim().replace(/^"|"$/g, ""); });
+      return {
+        name: pick(row, ["name", "full name", "candidate name", "candidate"]),
+        mobile: pick(row, ["mobile", "phone", "contact", "mobile number", "phone number", "mobile no"]),
+        email: pick(row, ["email", "email address", "mail", "e-mail"]),
+        position: pick(row, ["position", "role", "job title", "applied for", "post"]),
+        experience: pick(row, ["experience", "exp", "years", "years of experience"]) || undefined,
+        location: pick(row, ["location", "city", "place"]) || undefined,
+      };
+    }).filter((r) => r.name || r.mobile || r.email);
+
+    res.json({ rows, total: rows.length });
+  } catch (err) {
+    logger.error({ err }, "Fetch sheet error");
+    res.status(500).json({ error: "Failed to fetch Google Sheet" });
+  }
+});
+
 router.get("/candidates/:id", requireAuth, async (req, res) => {
   try {
     const id = parseInt(req.params.id);

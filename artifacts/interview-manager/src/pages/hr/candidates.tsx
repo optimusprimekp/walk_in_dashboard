@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Search, Upload, X, CheckCircle2, AlertCircle } from "lucide-react";
+import { Loader2, Search, Upload, X, CheckCircle2, AlertCircle, Sheet, FileSpreadsheet } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import * as XLSX from "xlsx";
@@ -20,24 +20,85 @@ type ParsedRow = {
   location?: string;
 };
 
+type ImportTab = "excel" | "sheets";
+
+function PreviewTable({ rows }: { rows: ParsedRow[] }) {
+  const invalid = rows.filter(r => !r.name || !r.mobile || !r.email || !r.position);
+  return (
+    <>
+      <div className="flex items-center justify-between text-sm">
+        <p className="font-semibold text-zinc-700">
+          {rows.length} rows found
+          {invalid.length > 0 && (
+            <span className="text-amber-600 ml-2">({invalid.length} missing required fields — will be skipped)</span>
+          )}
+        </p>
+        <p className="text-zinc-400">Required: Name, Mobile, Email, Position</p>
+      </div>
+      <div className="rounded-xl border border-zinc-200 overflow-hidden">
+        <div className="overflow-auto max-h-60">
+          <Table>
+            <TableHeader className="bg-zinc-50">
+              <TableRow>
+                <TableHead className="font-semibold">Name</TableHead>
+                <TableHead className="font-semibold">Mobile</TableHead>
+                <TableHead className="font-semibold">Email</TableHead>
+                <TableHead className="font-semibold">Position</TableHead>
+                <TableHead className="font-semibold">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.slice(0, 50).map((row, i) => {
+                const bad = !row.name || !row.mobile || !row.email || !row.position;
+                return (
+                  <TableRow key={i} className={bad ? "bg-amber-50" : ""}>
+                    <TableCell className="font-medium">{row.name || <span className="text-destructive text-xs">missing</span>}</TableCell>
+                    <TableCell>{row.mobile || <span className="text-destructive text-xs">missing</span>}</TableCell>
+                    <TableCell className="text-xs text-zinc-500 max-w-[140px] truncate">{row.email || <span className="text-destructive text-xs">missing</span>}</TableCell>
+                    <TableCell>{row.position || <span className="text-destructive text-xs">missing</span>}</TableCell>
+                    <TableCell>
+                      {bad
+                        ? <Badge variant="outline" className="border-amber-300 text-amber-700 bg-amber-50 text-xs">Skip</Badge>
+                        : <Badge variant="outline" className="border-emerald-300 text-emerald-700 bg-emerald-50 text-xs">OK</Badge>}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              {rows.length > 50 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-zinc-400 text-sm py-3">
+                    … and {rows.length - 50} more rows
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function ImportModal({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
+  const [tab, setTab] = useState<ImportTab>("excel");
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string>("");
+  const [sheetUrl, setSheetUrl] = useState("");
+  const [fetchingSheet, setFetchingSheet] = useState(false);
   const [result, setResult] = useState<{ imported: number; skipped: number; total: number; errors: string[] } | null>(null);
 
   const importMutation = useImportCandidates();
 
+  const resetRows = () => { setRows([]); setParseError(null); setResult(null); };
+
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setParseError(null);
-    setRows([]);
-    setResult(null);
+    resetRows();
     setFileName(file.name);
-
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
@@ -45,7 +106,6 @@ function ImportModal({ onClose }: { onClose: () => void }) {
         const wb = XLSX.read(data, { type: "array" });
         const ws = wb.Sheets[wb.SheetNames[0]];
         const json: Record<string, unknown>[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
-
         const normalize = (row: Record<string, unknown>, keys: string[]): string => {
           for (const k of keys) {
             const found = Object.keys(row).find(rk => rk.toLowerCase().trim() === k.toLowerCase());
@@ -53,7 +113,6 @@ function ImportModal({ onClose }: { onClose: () => void }) {
           }
           return "";
         };
-
         const parsed: ParsedRow[] = json.map((row) => ({
           name: normalize(row, ["name", "full name", "candidate name"]),
           mobile: normalize(row, ["mobile", "phone", "contact", "mobile number", "phone number"]),
@@ -62,11 +121,7 @@ function ImportModal({ onClose }: { onClose: () => void }) {
           experience: normalize(row, ["experience", "exp", "years"]) || undefined,
           location: normalize(row, ["location", "city", "place"]) || undefined,
         })).filter(r => r.name || r.mobile || r.email);
-
-        if (parsed.length === 0) {
-          setParseError("No rows found. Make sure your sheet has columns: Name, Mobile, Email, Position.");
-          return;
-        }
+        if (parsed.length === 0) { setParseError("No rows found. Make sure your sheet has columns: Name, Mobile, Email, Position."); return; }
         setRows(parsed);
       } catch {
         setParseError("Could not parse file. Please use a valid .xlsx or .xls file.");
@@ -75,45 +130,112 @@ function ImportModal({ onClose }: { onClose: () => void }) {
     reader.readAsArrayBuffer(file);
   };
 
+  const handleFetchSheet = async () => {
+    if (!sheetUrl.trim()) return;
+    resetRows();
+    setFetchingSheet(true);
+    try {
+      const resp = await fetch(`/api/candidates/fetch-sheet?url=${encodeURIComponent(sheetUrl)}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}` },
+      });
+      const data = await resp.json();
+      if (!resp.ok) { setParseError(data.error || "Failed to fetch sheet"); return; }
+      if (!data.rows || data.rows.length === 0) { setParseError("No rows found. Check that the sheet has the required columns and is shared correctly."); return; }
+      setRows(data.rows);
+    } catch {
+      setParseError("Network error. Could not reach the Google Sheet.");
+    } finally {
+      setFetchingSheet(false);
+    }
+  };
+
   const handleImport = () => {
     importMutation.mutate({ data: { candidates: rows } }, {
-      onSuccess: (data) => {
-        setResult(data);
-        queryClient.invalidateQueries();
-      }
+      onSuccess: (data) => { setResult(data); queryClient.invalidateQueries(); }
     });
   };
 
-  const missingRequired = rows.filter(r => !r.name || !r.mobile || !r.email || !r.position);
+  const validRows = rows.filter(r => r.name && r.mobile && r.email && r.position);
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h2 className="text-xl font-bold text-zinc-900">Import Candidates from Excel</h2>
+          <h2 className="text-xl font-bold text-zinc-900">Import Candidates</h2>
           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full h-9 w-9">
             <X className="w-5 h-5" />
           </Button>
         </div>
 
-        <div className="flex-1 overflow-auto p-6 space-y-6">
+        {!result && (
+          <div className="px-6 pt-4 flex gap-2">
+            <Button
+              variant={tab === "excel" ? "default" : "outline"}
+              size="sm"
+              className="gap-2"
+              onClick={() => { setTab("excel"); resetRows(); setFileName(""); }}
+            >
+              <FileSpreadsheet className="w-4 h-4" /> Excel / CSV
+            </Button>
+            <Button
+              variant={tab === "sheets" ? "default" : "outline"}
+              size="sm"
+              className="gap-2"
+              onClick={() => { setTab("sheets"); resetRows(); setSheetUrl(""); }}
+            >
+              <Sheet className="w-4 h-4" /> Google Sheets
+            </Button>
+          </div>
+        )}
+
+        <div className="flex-1 overflow-auto p-6 space-y-5">
           {!result ? (
             <>
-              <div
-                className="border-2 border-dashed border-zinc-200 rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all"
-                onClick={() => fileRef.current?.click()}
-              >
-                <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFile} />
-                <Upload className="w-10 h-10 mx-auto mb-3 text-zinc-300" />
-                {fileName ? (
-                  <p className="font-medium text-zinc-700">{fileName}</p>
-                ) : (
-                  <>
-                    <p className="font-medium text-zinc-700">Click to upload Excel file</p>
-                    <p className="text-sm text-zinc-400 mt-1">Supports .xlsx and .xls</p>
-                  </>
-                )}
-              </div>
+              {tab === "excel" && (
+                <div
+                  className="border-2 border-dashed border-zinc-200 rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all"
+                  onClick={() => fileRef.current?.click()}
+                >
+                  <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFile} />
+                  <Upload className="w-10 h-10 mx-auto mb-3 text-zinc-300" />
+                  {fileName ? (
+                    <p className="font-medium text-zinc-700">{fileName}</p>
+                  ) : (
+                    <>
+                      <p className="font-medium text-zinc-700">Click to upload Excel or CSV file</p>
+                      <p className="text-sm text-zinc-400 mt-1">Supports .xlsx, .xls, .csv</p>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {tab === "sheets" && (
+                <div className="space-y-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800 space-y-2">
+                    <p className="font-semibold">How to share your Google Sheet:</p>
+                    <ol className="list-decimal list-inside space-y-1 text-blue-700">
+                      <li>Open your Google Sheet</li>
+                      <li>Click <strong>Share</strong> (top right)</li>
+                      <li>Under "General access", choose <strong>Anyone with the link → Viewer</strong></li>
+                      <li>Click <strong>Copy link</strong> and paste it below</li>
+                    </ol>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      value={sheetUrl}
+                      onChange={(e) => setSheetUrl(e.target.value)}
+                      placeholder="https://docs.google.com/spreadsheets/d/..."
+                      className="flex-1 bg-zinc-50"
+                    />
+                    <Button onClick={handleFetchSheet} disabled={fetchingSheet || !sheetUrl.trim()} className="gap-2 flex-shrink-0">
+                      {fetchingSheet ? <><Loader2 className="w-4 h-4 animate-spin" /> Fetching…</> : "Load Sheet"}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-zinc-400">
+                    Column headers should include: <strong>Name, Mobile, Email, Position</strong> (optional: Experience, Location)
+                  </p>
+                </div>
+              )}
 
               {parseError && (
                 <div className="flex items-start gap-3 bg-destructive/10 text-destructive rounded-xl p-4">
@@ -122,62 +244,7 @@ function ImportModal({ onClose }: { onClose: () => void }) {
                 </div>
               )}
 
-              {rows.length > 0 && (
-                <>
-                  <div className="flex items-center justify-between">
-                    <p className="font-semibold text-zinc-700">{rows.length} rows found
-                      {missingRequired.length > 0 && (
-                        <span className="text-amber-600 ml-2 text-sm">({missingRequired.length} missing required fields — will be skipped)</span>
-                      )}
-                    </p>
-                    <p className="text-sm text-zinc-400">Required: Name, Mobile, Email, Position</p>
-                  </div>
-
-                  <div className="rounded-xl border border-zinc-200 overflow-hidden">
-                    <div className="overflow-auto max-h-64">
-                      <Table>
-                        <TableHeader className="bg-zinc-50">
-                          <TableRow>
-                            <TableHead className="font-semibold">Name</TableHead>
-                            <TableHead className="font-semibold">Mobile</TableHead>
-                            <TableHead className="font-semibold">Email</TableHead>
-                            <TableHead className="font-semibold">Position</TableHead>
-                            <TableHead className="font-semibold">Experience</TableHead>
-                            <TableHead className="font-semibold">Status</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {rows.slice(0, 50).map((row, i) => {
-                            const invalid = !row.name || !row.mobile || !row.email || !row.position;
-                            return (
-                              <TableRow key={i} className={invalid ? "bg-amber-50" : ""}>
-                                <TableCell className="font-medium">{row.name || <span className="text-destructive text-xs">missing</span>}</TableCell>
-                                <TableCell>{row.mobile || <span className="text-destructive text-xs">missing</span>}</TableCell>
-                                <TableCell className="text-xs text-zinc-500">{row.email || <span className="text-destructive text-xs">missing</span>}</TableCell>
-                                <TableCell>{row.position || <span className="text-destructive text-xs">missing</span>}</TableCell>
-                                <TableCell className="text-zinc-500">{row.experience || "—"}</TableCell>
-                                <TableCell>
-                                  {invalid
-                                    ? <Badge variant="outline" className="border-amber-300 text-amber-700 bg-amber-50 text-xs">Skip</Badge>
-                                    : <Badge variant="outline" className="border-emerald-300 text-emerald-700 bg-emerald-50 text-xs">OK</Badge>
-                                  }
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                          {rows.length > 50 && (
-                            <TableRow>
-                              <TableCell colSpan={6} className="text-center text-zinc-400 text-sm py-3">
-                                … and {rows.length - 50} more rows
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                </>
-              )}
+              {rows.length > 0 && <PreviewTable rows={rows} />}
             </>
           ) : (
             <div className="py-8 text-center space-y-6">
@@ -212,19 +279,16 @@ function ImportModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="px-6 py-4 border-t flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose}>
-            {result ? "Close" : "Cancel"}
-          </Button>
+          <Button variant="outline" onClick={onClose}>{result ? "Close" : "Cancel"}</Button>
           {!result && rows.length > 0 && (
             <Button
               onClick={handleImport}
-              disabled={importMutation.isPending || rows.filter(r => r.name && r.mobile && r.email && r.position).length === 0}
+              disabled={importMutation.isPending || validRows.length === 0}
               className="gap-2"
             >
               {importMutation.isPending
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Importing…</>
-                : <><Upload className="w-4 h-4" /> Import {rows.filter(r => r.name && r.mobile && r.email && r.position).length} Candidates</>
-              }
+                : <><Upload className="w-4 h-4" /> Import {validRows.length} Candidates</>}
             </Button>
           )}
         </div>
@@ -277,7 +341,7 @@ export default function Candidates() {
             <h1 className="font-semibold text-lg">Candidate Roster</h1>
           </div>
           <Button variant="outline" className="gap-2" onClick={() => setShowImport(true)}>
-            <Upload className="w-4 h-4" /> Import Excel
+            <Upload className="w-4 h-4" /> Import
           </Button>
         </div>
       </header>
