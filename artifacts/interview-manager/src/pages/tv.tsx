@@ -49,12 +49,10 @@ export default function TvDisplay() {
     <div className="min-h-screen bg-black text-white flex flex-col overflow-hidden font-sans">
       <header className="px-8 py-6 border-b border-white/10 flex justify-between items-center bg-zinc-950">
         <div className="flex items-center gap-4">
-          <div className="h-12 w-12 bg-primary rounded flex items-center justify-center text-primary-foreground text-2xl font-bold">
-            W
-          </div>
+          <img src="/kp-logo.png" alt="KP Group" className="h-12 w-12 object-contain bg-white rounded p-0.5" />
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-zinc-100">Walk-In Interviews</h1>
-            <p className="text-zinc-400 font-medium tracking-wide">Queue Status</p>
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-100">KP Group of Companies</h1>
+            <p className="text-zinc-400 font-medium tracking-wide">Walk-In Interview — Queue Status</p>
           </div>
         </div>
         <div className="text-right">

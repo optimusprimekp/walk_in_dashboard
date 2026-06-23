@@ -84,11 +84,9 @@ export default function Dashboard() {
 
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="h-8 w-8 bg-primary rounded flex items-center justify-center text-primary-foreground font-bold">
-              W
-            </div>
-            <h1 className="font-semibold text-lg">Command Center</h1>
+          <div className="flex items-center gap-3">
+            <img src="/kp-logo.png" alt="KP Group" className="h-9 w-9 object-contain" />
+            <h1 className="font-semibold text-lg">KP Group of Companies</h1>
           </div>
           <nav className="flex items-center gap-6 text-sm font-medium">
             <Link href="/" className="text-primary">Dashboard</Link>

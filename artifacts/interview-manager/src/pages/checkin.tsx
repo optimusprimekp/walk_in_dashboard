@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, ArrowLeft, CheckCircle2 } from "lucide-react";
 
-type Step = 'HOME' | 'PRE_REGISTERED_LOOKUP' | 'NEW_REGISTRATION' | 'CONFIRMATION';
+type Step = 'HOME' | 'PRE_REGISTERED_LOOKUP' | 'NOT_FOUND_QR' | 'NEW_REGISTRATION' | 'CONFIRMATION';
 
 export default function Checkin() {
   const [step, setStep] = useState<Step>('HOME');
@@ -64,10 +64,9 @@ export default function Checkin() {
       });
       setStep('CONFIRMATION');
     } catch (err) {
-      alert("Could not find registration. Please register as a new candidate.");
-      setStep('NEW_REGISTRATION');
       if (identifier.includes('@')) setEmail(identifier);
       else setMobile(identifier);
+      setStep('NOT_FOUND_QR');
     }
   };
 
@@ -94,11 +93,11 @@ export default function Checkin() {
     <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
-          <div className="mx-auto h-16 w-16 bg-primary rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-primary/20">
-            <span className="text-3xl font-bold text-primary-foreground">W</span>
+          <div className="mx-auto mb-4 flex items-center justify-center">
+            <img src="/kp-logo.png" alt="KP Group" className="h-20 w-20 object-contain drop-shadow-lg" />
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-zinc-900 mb-2">Self Check-In</h1>
-          <p className="text-xl text-zinc-500">Welcome to our interview event</p>
+          <h1 className="text-4xl font-bold tracking-tight text-zinc-900 mb-1">KP Group of Companies</h1>
+          <p className="text-xl text-zinc-500">Walk-In Interview Self Check-In</p>
         </div>
 
         <Card className="border-0 shadow-2xl shadow-zinc-200/50 overflow-hidden bg-white rounded-3xl">
@@ -156,6 +155,43 @@ export default function Checkin() {
                     ) : "Find & Generate Token"}
                   </Button>
                 </form>
+              </div>
+            )}
+
+            {step === 'NOT_FOUND_QR' && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center">
+                  <Button variant="ghost" size="icon" onClick={() => setStep('HOME')} className="mr-4 rounded-full h-12 w-12 hover:bg-zinc-100">
+                    <ArrowLeft className="h-6 w-6" />
+                  </Button>
+                  <h2 className="text-2xl font-bold">Not Pre-Registered?</h2>
+                </div>
+
+                <div className="text-center space-y-2">
+                  <p className="text-zinc-600 text-lg">We couldn't find your registration.</p>
+                  <p className="text-zinc-500">Scan the QR code below to register online, or fill in the form manually.</p>
+                </div>
+
+                <div className="flex flex-col items-center gap-4 py-4">
+                  <div className="bg-white border-2 border-zinc-100 rounded-2xl p-4 shadow-lg">
+                    <img src="/registration-qr.png" alt="Registration QR Code" className="h-52 w-52 object-contain" />
+                  </div>
+                  <p className="text-sm font-semibold text-zinc-500 uppercase tracking-widest">Scan to Register Online</p>
+                </div>
+
+                <div className="relative flex items-center gap-4">
+                  <div className="flex-1 border-t border-zinc-200" />
+                  <span className="text-sm text-zinc-400 font-medium">or</span>
+                  <div className="flex-1 border-t border-zinc-200" />
+                </div>
+
+                <Button
+                  onClick={() => setStep('NEW_REGISTRATION')}
+                  variant="outline"
+                  className="w-full h-14 text-lg font-semibold rounded-xl border-2 border-zinc-200"
+                >
+                  Fill in the Form Manually
+                </Button>
               </div>
             )}
 

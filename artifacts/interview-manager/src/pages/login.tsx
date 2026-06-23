@@ -44,11 +44,11 @@ export default function Login() {
       <div className="flex-1 flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
-            <div className="mx-auto h-12 w-12 bg-primary rounded-lg flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
-              <span className="text-2xl font-bold text-primary-foreground">W</span>
+            <div className="mx-auto mb-4 flex items-center justify-center">
+              <img src="/kp-logo.png" alt="KP Group" className="h-20 w-20 object-contain" />
             </div>
             <h2 className="text-3xl font-bold tracking-tight text-foreground">
-              Command Center
+              KP Group of Companies
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Walk-In Interview Management System
@@ -114,12 +114,13 @@ export default function Login() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/20 via-background/0 to-background/0" />
         <div className="w-[80%] max-w-[600px] aspect-square rounded-full border border-primary/20 absolute -right-20 -top-20 opacity-20" />
         <div className="w-[60%] max-w-[400px] aspect-square rounded-full border border-primary/30 absolute right-20 top-20 opacity-20" />
-        <div className="z-10 text-center space-y-6 p-12">
+        <div className="z-10 text-center space-y-6 p-12 flex flex-col items-center">
+          <img src="/kp-logo.png" alt="KP Group" className="h-40 w-40 object-contain drop-shadow-xl" />
           <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-foreground max-w-lg">
-            Precision Operations Platform
+            KP Group of Companies
           </h1>
           <p className="text-lg text-muted-foreground max-w-md mx-auto">
-            High-volume interview days managed with real-time urgency.
+            Since 1994 — High-volume interview days managed with real-time urgency.
           </p>
         </div>
       </div>

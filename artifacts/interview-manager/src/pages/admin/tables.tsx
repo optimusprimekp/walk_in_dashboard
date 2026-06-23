@@ -87,6 +87,7 @@ export default function Tables() {
             <Button variant="ghost" onClick={() => setLocation("/")} className="px-2 -ml-2">
                &larr; Back
             </Button>
+            <img src="/kp-logo.png" alt="KP Group" className="h-8 w-8 object-contain" />
             <h1 className="font-semibold text-lg">Table Management</h1>
           </div>
           

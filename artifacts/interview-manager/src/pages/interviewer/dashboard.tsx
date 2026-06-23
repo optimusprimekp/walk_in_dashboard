@@ -105,8 +105,8 @@ export default function InterviewerDashboard() {
       <header className="bg-zinc-950 text-white border-b border-zinc-800">
         <div className="container mx-auto px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 bg-primary rounded flex items-center justify-center font-bold text-white flex-shrink-0">W</div>
-            <h1 className="font-semibold tracking-wide">Interviewer Console</h1>
+            <img src="/kp-logo.png" alt="KP Group" className="h-8 w-8 object-contain bg-white rounded p-0.5 flex-shrink-0" />
+            <h1 className="font-semibold tracking-wide">KP Group of Companies</h1>
           </div>
           <div className="w-full sm:w-64">
             <Select value={selectedTableId} onValueChange={setSelectedTableId}>
