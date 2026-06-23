@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 
 export const candidatesTable = pgTable("candidates", {
   id: serial("id").primaryKey(),
+  candidateRef: text("candidate_ref"),
   tokenNo: text("token_no"),
   name: text("name").notNull(),
   mobile: text("mobile").notNull(),

@@ -1,14 +1,31 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGetTvDisplay } from "@workspace/api-client-react";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import QRCode from "qrcode";
+
+function QrCanvas({ url, size = 100 }: { url: string; size?: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    if (canvasRef.current && url) {
+      QRCode.toCanvas(canvasRef.current, url, {
+        width: size,
+        margin: 1,
+        color: { dark: "#000000", light: "#ffffff" },
+      });
+    }
+  }, [url, size]);
+  return <canvas ref={canvasRef} />;
+}
+
+function getCheckinUrl() {
+  return `${window.location.origin}/checkin`;
+}
 
 export default function TvDisplay() {
   const { data, isLoading } = useGetTvDisplay({
-    query: {
-      refetchInterval: 5000,
-    },
+    query: { refetchInterval: 5000 },
   });
 
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -51,7 +68,6 @@ export default function TvDisplay() {
       </header>
 
       <div className="flex-1 flex flex-col lg:flex-row p-6 gap-6 overflow-hidden">
-        {/* Left Column - Now Calling */}
         <div className="w-full lg:w-1/3 flex flex-col gap-6">
           <h2 className="text-2xl font-bold tracking-tight text-primary uppercase flex items-center gap-3">
             <div className="h-3 w-3 rounded-full bg-primary animate-pulse" />
@@ -80,9 +96,19 @@ export default function TvDisplay() {
               </div>
             )}
           </div>
+
+          <div className="bg-zinc-900 rounded-xl border border-white/10 p-4 flex items-center gap-4">
+            <div className="bg-white rounded-lg p-1 flex-shrink-0">
+              <QrCanvas url={getCheckinUrl()} size={80} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1">Self Check-In</p>
+              <p className="text-sm text-zinc-300 font-medium">Scan to register &amp; get your token</p>
+              <p className="text-xs text-zinc-500 font-mono mt-1">/checkin</p>
+            </div>
+          </div>
         </div>
 
-        {/* Right Column - Queue */}
         <div className="w-full lg:w-2/3 flex flex-col gap-6">
           <h2 className="text-2xl font-bold tracking-tight text-zinc-100 uppercase">Up Next</h2>
           <div className="flex-1 bg-zinc-900 rounded-xl border border-white/5 overflow-hidden flex flex-col">

@@ -599,6 +599,8 @@ components:
       properties:
         id:
           type: integer
+        candidateRef:
+          type: ["string", "null"]
         tokenNo:
           type: ["string", "null"]
         name:

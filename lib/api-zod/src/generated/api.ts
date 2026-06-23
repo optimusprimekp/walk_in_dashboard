@@ -60,6 +60,7 @@ export const ListCandidatesQueryParams = zod.object({
 
 export const ListCandidatesResponseItem = zod.object({
   "id": zod.number(),
+  "candidateRef": zod.string().nullish(),
   "tokenNo": zod.string().nullish(),
   "name": zod.string(),
   "mobile": zod.string(),
@@ -104,6 +105,7 @@ export const LookupCandidateBody = zod.object({
 
 export const LookupCandidateResponse = zod.object({
   "id": zod.number(),
+  "candidateRef": zod.string().nullish(),
   "tokenNo": zod.string().nullish(),
   "name": zod.string(),
   "mobile": zod.string(),
@@ -156,6 +158,7 @@ export const GetCandidateParams = zod.object({
 
 export const GetCandidateResponse = zod.object({
   "id": zod.number(),
+  "candidateRef": zod.string().nullish(),
   "tokenNo": zod.string().nullish(),
   "name": zod.string(),
   "mobile": zod.string(),
@@ -194,6 +197,7 @@ export const UpdateCandidateBody = zod.object({
 
 export const UpdateCandidateResponse = zod.object({
   "id": zod.number(),
+  "candidateRef": zod.string().nullish(),
   "tokenNo": zod.string().nullish(),
   "name": zod.string(),
   "mobile": zod.string(),
@@ -222,6 +226,7 @@ export const CheckinCandidateParams = zod.object({
 export const CheckinCandidateResponse = zod.object({
   "candidate": zod.object({
   "id": zod.number(),
+  "candidateRef": zod.string().nullish(),
   "tokenNo": zod.string().nullish(),
   "name": zod.string(),
   "mobile": zod.string(),

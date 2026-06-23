@@ -10,6 +10,8 @@ import type { CandidateStatus } from './candidateStatus';
 export interface Candidate {
   id: number;
   /** @nullable */
+  candidateRef?: string | null;
+  /** @nullable */
   tokenNo?: string | null;
   name: string;
   mobile: string;

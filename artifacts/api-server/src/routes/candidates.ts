@@ -9,6 +9,12 @@ import { autoAssignToken } from "./queue";
 
 const router = Router();
 
+function generateCandidateRef(email: string, mobile: string): string {
+  const emailPrefix = email.split("@")[0].replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 4);
+  const mobileEnd = mobile.replace(/\D/g, "").slice(-4);
+  return `${emailPrefix}-${mobileEnd}`;
+}
+
 router.get("/candidates", requireAuth, async (req: any, res) => {
   try {
     const { status, date, search, position } = req.query as Record<string, string>;
@@ -57,9 +63,10 @@ router.post("/candidates", requireAuth, async (req, res) => {
     if (!name || !mobile || !email || !position) {
       return res.status(400).json({ error: "name, mobile, email, position required" });
     }
+    const candidateRef = generateCandidateRef(email, mobile);
     const [candidate] = await db
       .insert(candidatesTable)
-      .values({ name, mobile, email, position, experience, location, scheduledDate, status: status || "PRE_REGISTERED" })
+      .values({ candidateRef, name, mobile, email, position, experience, location, scheduledDate, status: status || "PRE_REGISTERED" })
       .returning();
     res.status(201).json({ ...candidate, assignedTableNo: null });
   } catch (err) {
@@ -113,7 +120,9 @@ router.post("/candidates/import", requireAuth, async (req, res) => {
           skipped++;
           continue;
         }
+        const candidateRef = generateCandidateRef(c.email, c.mobile);
         await db.insert(candidatesTable).values({
+          candidateRef,
           name: c.name,
           mobile: c.mobile,
           email: c.email,
