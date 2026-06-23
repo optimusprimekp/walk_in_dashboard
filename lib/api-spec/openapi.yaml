@@ -651,6 +651,10 @@ components:
           type: string
         experience:
           type: string
+        currentCompany:
+          type: string
+        currentDesignation:
+          type: string
         location:
           type: string
         scheduledDate:
@@ -670,6 +674,10 @@ components:
         position:
           type: string
         experience:
+          type: string
+        currentCompany:
+          type: string
+        currentDesignation:
           type: string
         status:
           type: string

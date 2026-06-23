@@ -91,6 +91,8 @@ export const CreateCandidateBody = zod.object({
   "email": zod.string(),
   "position": zod.string(),
   "experience": zod.string().optional(),
+  "currentCompany": zod.string().optional(),
+  "currentDesignation": zod.string().optional(),
   "location": zod.string().optional(),
   "scheduledDate": zod.string().optional(),
   "status": zod.string().optional()
@@ -138,6 +140,8 @@ export const ImportCandidatesBody = zod.object({
   "email": zod.string(),
   "position": zod.string(),
   "experience": zod.string().optional(),
+  "currentCompany": zod.string().optional(),
+  "currentDesignation": zod.string().optional(),
   "location": zod.string().optional(),
   "scheduledDate": zod.string().optional(),
   "status": zod.string().optional()
@@ -196,6 +200,8 @@ export const UpdateCandidateBody = zod.object({
   "email": zod.string().optional(),
   "position": zod.string().optional(),
   "experience": zod.string().optional(),
+  "currentCompany": zod.string().optional(),
+  "currentDesignation": zod.string().optional(),
   "status": zod.string().optional(),
   "location": zod.string().optional(),
   "scheduledDate": zod.string().optional()

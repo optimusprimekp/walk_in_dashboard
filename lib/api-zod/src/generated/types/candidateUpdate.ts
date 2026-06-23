@@ -12,6 +12,8 @@ export interface CandidateUpdate {
   email?: string;
   position?: string;
   experience?: string;
+  currentCompany?: string;
+  currentDesignation?: string;
   status?: string;
   location?: string;
   scheduledDate?: string;

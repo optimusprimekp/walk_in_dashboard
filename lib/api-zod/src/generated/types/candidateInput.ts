@@ -12,6 +12,8 @@ export interface CandidateInput {
   email: string;
   position: string;
   experience?: string;
+  currentCompany?: string;
+  currentDesignation?: string;
   location?: string;
   scheduledDate?: string;
   status?: string;
