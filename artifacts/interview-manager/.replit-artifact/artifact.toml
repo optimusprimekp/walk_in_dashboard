@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Walk-In Interview Manager"
+version = "1.0.0"
+id = "artifacts/interview-manager"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21684
+
+[services.development]
+run = "pnpm --filter @workspace/interview-manager run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/interview-manager", "run", "build" ]
+publicDir = "artifacts/interview-manager/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21684"
+BASE_PATH = "/"

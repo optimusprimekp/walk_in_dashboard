@@ -1,22 +1,33 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Walk-In Interview Management System API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: candidates
+    description: Candidate management
+  - name: tokens
+    description: Token queue management
+  - name: tables
+    description: Interview table management
+  - name: sessions
+    description: Interview session management
+  - name: dashboard
+    description: Dashboard analytics
+  - name: auth
+    description: Authentication
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +35,906 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with username and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Unauthorized
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user info
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /candidates:
+    get:
+      operationId: listCandidates
+      tags: [candidates]
+      summary: List all candidates with optional filters
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: date
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: position
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of candidates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Candidate"
+    post:
+      operationId: createCandidate
+      tags: [candidates]
+      summary: Create a new walk-in candidate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CandidateInput"
+      responses:
+        "201":
+          description: Candidate created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Candidate"
+
+  /candidates/lookup:
+    post:
+      operationId: lookupCandidate
+      tags: [candidates]
+      summary: Look up pre-registered candidate by mobile or email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CandidateLookup"
+      responses:
+        "200":
+          description: Candidate found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Candidate"
+        "404":
+          description: Not found
+
+  /candidates/import:
+    post:
+      operationId: importCandidates
+      tags: [candidates]
+      summary: Bulk import candidates from parsed Excel data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CandidateImport"
+      responses:
+        "200":
+          description: Import result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportResult"
+
+  /candidates/{id}:
+    get:
+      operationId: getCandidate
+      tags: [candidates]
+      summary: Get candidate by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Candidate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Candidate"
+    patch:
+      operationId: updateCandidate
+      tags: [candidates]
+      summary: Update candidate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CandidateUpdate"
+      responses:
+        "200":
+          description: Updated candidate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Candidate"
+
+  /candidates/{id}/checkin:
+    post:
+      operationId: checkinCandidate
+      tags: [candidates]
+      summary: Check in a candidate and generate token
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Checked in with token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckinResult"
+
+  /tokens:
+    get:
+      operationId: listTokens
+      tags: [tokens]
+      summary: Get today's token queue
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Token queue
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Token"
+
+  /tokens/next:
+    post:
+      operationId: assignNextToken
+      tags: [tokens]
+      summary: Assign next waiting token to an available table
+      responses:
+        "200":
+          description: Token assigned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Token"
+        "404":
+          description: No tokens waiting or no tables available
+
+  /tokens/reset:
+    post:
+      operationId: resetDailyTokens
+      tags: [tokens]
+      summary: Reset token counter for the day (admin only)
+      responses:
+        "200":
+          description: Tokens reset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+
+  /tokens/{id}:
+    get:
+      operationId: getToken
+      tags: [tokens]
+      summary: Get token by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Token"
+    patch:
+      operationId: updateToken
+      tags: [tokens]
+      summary: Update token status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenUpdate"
+      responses:
+        "200":
+          description: Updated token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Token"
+
+  /tables:
+    get:
+      operationId: listTables
+      tags: [tables]
+      summary: List all interview tables
+      responses:
+        "200":
+          description: Tables
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InterviewTable"
+    post:
+      operationId: createTable
+      tags: [tables]
+      summary: Create a new interview table
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TableInput"
+      responses:
+        "201":
+          description: Created table
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterviewTable"
+
+  /tables/{id}:
+    patch:
+      operationId: updateTable
+      tags: [tables]
+      summary: Update table info or status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TableUpdate"
+      responses:
+        "200":
+          description: Updated table
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterviewTable"
+    delete:
+      operationId: deleteTable
+      tags: [tables]
+      summary: Delete a table
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+
+  /sessions:
+    get:
+      operationId: listSessions
+      tags: [sessions]
+      summary: List interview sessions with optional filters
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+        - name: tableId
+          in: query
+          schema:
+            type: integer
+        - name: result
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InterviewSession"
+
+  /sessions/{id}/start:
+    post:
+      operationId: startSession
+      tags: [sessions]
+      summary: Start an interview session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Session started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterviewSession"
+
+  /sessions/{id}/end:
+    post:
+      operationId: endSession
+      tags: [sessions]
+      summary: End an interview session with result
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionResult"
+      responses:
+        "200":
+          description: Session ended
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterviewSession"
+
+  /sessions/{id}:
+    get:
+      operationId: getSession
+      tags: [sessions]
+      summary: Get session by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterviewSession"
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get today's dashboard statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/tv:
+    get:
+      operationId: getTvDisplay
+      tags: [dashboard]
+      summary: Get TV display data (top 20 active tokens + tables)
+      responses:
+        "200":
+          description: TV display data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TvDisplayData"
+
+  /dashboard/hourly:
+    get:
+      operationId: getHourlyStats
+      tags: [dashboard]
+      summary: Get hourly interview counts for today
+      responses:
+        "200":
+          description: Hourly stats
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HourlyStat"
+
+  /dashboard/positions:
+    get:
+      operationId: getPositionStats
+      tags: [dashboard]
+      summary: Get candidate count by position
+      responses:
+        "200":
+          description: Position stats
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PositionStat"
+
+  /dashboard/announcements:
+    get:
+      operationId: getAnnouncements
+      tags: [dashboard]
+      summary: Get recent token call announcements
+      responses:
+        "200":
+          description: Recent announcements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Announcement"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    LoginInput:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+
+    User:
+      type: object
+      required: [id, username, role, name]
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [ADMIN, HR, INTERVIEWER, RECEPTION, VIEWER]
+        tableId:
+          type: ["integer", "null"]
+
+    Candidate:
+      type: object
+      required: [id, name, mobile, email, position, status, createdAt]
+      properties:
+        id:
+          type: integer
+        tokenNo:
+          type: ["string", "null"]
+        name:
+          type: string
+        mobile:
+          type: string
+        email:
+          type: string
+        position:
+          type: string
+        experience:
+          type: ["string", "null"]
+        resumeUrl:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [PRE_REGISTERED, CHECKED_IN, WAITING, ASSIGNED, IN_INTERVIEW, COMPLETED, NO_SHOW, SELECTED, REJECTED, ON_HOLD]
+        scheduledDate:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        checkinTime:
+          type: ["string", "null"]
+        assignedTableId:
+          type: ["integer", "null"]
+        assignedTableNo:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    CandidateInput:
+      type: object
+      required: [name, mobile, email, position]
+      properties:
+        name:
+          type: string
+        mobile:
+          type: string
+        email:
+          type: string
+        position:
+          type: string
+        experience:
+          type: string
+        location:
+          type: string
+        scheduledDate:
+          type: string
+        status:
+          type: string
+
+    CandidateUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        mobile:
+          type: string
+        email:
+          type: string
+        position:
+          type: string
+        experience:
+          type: string
+        status:
+          type: string
+        location:
+          type: string
+        scheduledDate:
+          type: string
+
+    CandidateLookup:
+      type: object
+      properties:
+        mobile:
+          type: string
+        email:
+          type: string
+
+    CandidateImport:
+      type: object
+      required: [candidates]
+      properties:
+        candidates:
+          type: array
+          items:
+            $ref: "#/components/schemas/CandidateInput"
+        scheduledDate:
+          type: string
+
+    ImportResult:
+      type: object
+      required: [imported, skipped, total]
+      properties:
+        imported:
+          type: integer
+        skipped:
+          type: integer
+        total:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string
+
+    CheckinResult:
+      type: object
+      required: [candidate, tokenNo, message]
+      properties:
+        candidate:
+          $ref: "#/components/schemas/Candidate"
+        tokenNo:
+          type: string
+        message:
+          type: string
+
+    Token:
+      type: object
+      required: [id, tokenNo, candidateId, status, createdAt]
+      properties:
+        id:
+          type: integer
+        tokenNo:
+          type: string
+        candidateId:
+          type: integer
+        candidateName:
+          type: string
+        position:
+          type: string
+        status:
+          type: string
+          enum: [WAITING, ASSIGNED, IN_INTERVIEW, COMPLETED, NO_SHOW]
+        assignedTableId:
+          type: ["integer", "null"]
+        assignedTableNo:
+          type: ["integer", "null"]
+        queuePosition:
+          type: integer
+        checkinTime:
+          type: string
+        createdAt:
+          type: string
+
+    TokenUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+        assignedTableId:
+          type: ["integer", "null"]
+
+    InterviewTable:
+      type: object
+      required: [id, tableNo, status]
+      properties:
+        id:
+          type: integer
+        tableNo:
+          type: integer
+        interviewerName:
+          type: ["string", "null"]
+        department:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [AVAILABLE, BUSY, BREAK, OFFLINE]
+        currentCandidateId:
+          type: ["integer", "null"]
+        currentCandidateName:
+          type: ["string", "null"]
+        currentTokenNo:
+          type: ["string", "null"]
+        currentSessionId:
+          type: ["integer", "null"]
+        sessionStartTime:
+          type: ["string", "null"]
+
+    TableInput:
+      type: object
+      required: [tableNo]
+      properties:
+        tableNo:
+          type: integer
+        interviewerName:
+          type: string
+        department:
+          type: string
+        status:
+          type: string
+
+    TableUpdate:
+      type: object
+      properties:
+        tableNo:
+          type: integer
+        interviewerName:
+          type: string
+        department:
+          type: string
+        status:
+          type: string
+
+    InterviewSession:
+      type: object
+      required: [id, candidateId, tableId, status, createdAt]
+      properties:
+        id:
+          type: integer
+        candidateId:
+          type: integer
+        candidateName:
+          type: string
+        position:
+          type: string
+        tableId:
+          type: integer
+        tableNo:
+          type: integer
+        tokenNo:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, IN_PROGRESS, COMPLETED]
+        startTime:
+          type: ["string", "null"]
+        endTime:
+          type: ["string", "null"]
+        duration:
+          type: ["integer", "null"]
+        result:
+          type: ["string", "null"]
+          enum: [SELECTED, REJECTED, ON_HOLD, null]
+        remarks:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    SessionResult:
+      type: object
+      required: [result]
+      properties:
+        result:
+          type: string
+          enum: [SELECTED, REJECTED, ON_HOLD]
+        remarks:
+          type: string
+
+    DashboardStats:
+      type: object
+      required: [total, checkedIn, waiting, assigned, inInterview, completed, selected, rejected, noShow, avgInterviewTime, activeTables]
+      properties:
+        total:
+          type: integer
+        checkedIn:
+          type: integer
+        waiting:
+          type: integer
+        assigned:
+          type: integer
+        inInterview:
+          type: integer
+        completed:
+          type: integer
+        selected:
+          type: integer
+        rejected:
+          type: integer
+        onHold:
+          type: integer
+        noShow:
+          type: integer
+        avgInterviewTime:
+          type: number
+        activeTables:
+          type: integer
+
+    TvDisplayData:
+      type: object
+      required: [tokens, tables, nowCalling, stats]
+      properties:
+        tokens:
+          type: array
+          items:
+            $ref: "#/components/schemas/Token"
+        tables:
+          type: array
+          items:
+            $ref: "#/components/schemas/InterviewTable"
+        nowCalling:
+          type: array
+          items:
+            $ref: "#/components/schemas/Token"
+        stats:
+          $ref: "#/components/schemas/DashboardStats"
+
+    HourlyStat:
+      type: object
+      required: [hour, count]
+      properties:
+        hour:
+          type: string
+        count:
+          type: integer
+
+    PositionStat:
+      type: object
+      required: [position, count]
+      properties:
+        position:
+          type: string
+        count:
+          type: integer
+
+    Announcement:
+      type: object
+      required: [id, tokenNo, tableNo, candidateName, timestamp]
+      properties:
+        id:
+          type: integer
+        tokenNo:
+          type: string
+        tableNo:
+          type: integer
+        candidateName:
+          type: string
+        timestamp:
+          type: string
+
+    OperationResult:
+      type: object
+      required: [success, message]
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
