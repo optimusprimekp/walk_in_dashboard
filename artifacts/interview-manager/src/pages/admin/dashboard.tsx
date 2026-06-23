@@ -196,7 +196,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="flex items-center gap-6">
             <div className="bg-white p-3 rounded-lg shadow-sm border border-border flex-shrink-0">
-              <QRCodeSVG value={getCheckinUrl()} size={120} level="H" includeMargin={false} />
+              <QrCanvas size={120} />
             </div>
             <div className="space-y-2">
               <p className="font-medium">Candidate Self Check-In</p>
