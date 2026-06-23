@@ -92,6 +92,7 @@ export default function Dashboard() {
             <Link href="/" className="text-primary">Dashboard</Link>
             <Link href="/candidates" className="text-muted-foreground hover:text-foreground">Candidates</Link>
             <Link href="/tables" className="text-muted-foreground hover:text-foreground">Tables</Link>
+            <Link href="/admin/site-positions" className="text-muted-foreground hover:text-foreground">Site Positions</Link>
             <Link href="/tv" className="text-muted-foreground hover:text-foreground">TV Display</Link>
           </nav>
         </div>
