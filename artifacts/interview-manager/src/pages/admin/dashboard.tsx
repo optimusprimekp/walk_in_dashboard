@@ -67,7 +67,7 @@ export default function Dashboard() {
   const { data: stats, isLoading } = useGetDashboardStats({
     query: {
       refetchInterval: 5000,
-    },
+    } as any,
   });
 
   if (isLoading || !stats) {

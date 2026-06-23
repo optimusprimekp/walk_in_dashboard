@@ -27,6 +27,64 @@ async function enrichTable(table: any) {
   };
 }
 
+router.get("/tables/routing-options", async (_req, res) => {
+  try {
+    const tables = await db
+      .select({ department: interviewTablesTable.department, positions: interviewTablesTable.positions })
+      .from(interviewTablesTable)
+      .where(eq(interviewTablesTable.status, "AVAILABLE"));
+
+    // Also include BUSY tables so options show even when all panels are occupied
+    const allTables = await db
+      .select({ department: interviewTablesTable.department, positions: interviewTablesTable.positions })
+      .from(interviewTablesTable);
+
+    const departmentsSet = new Set<string>();
+    const positionsByDept: Record<string, Set<string>> = {};
+
+    for (const t of allTables) {
+      let depts: string[] = [];
+      try {
+        if (t.department) {
+          const parsed = JSON.parse(t.department);
+          depts = Array.isArray(parsed) ? parsed : [t.department];
+        }
+      } catch {
+        if (t.department) depts = [t.department];
+      }
+
+      let positions: string[] = [];
+      try {
+        if (t.positions) {
+          positions = JSON.parse(t.positions) as string[];
+        }
+      } catch {
+        positions = [];
+      }
+
+      for (const dept of depts) {
+        departmentsSet.add(dept);
+        if (!positionsByDept[dept]) positionsByDept[dept] = new Set<string>();
+        for (const pos of positions) {
+          positionsByDept[dept].add(pos);
+        }
+      }
+    }
+
+    const result = {
+      departments: Array.from(departmentsSet).sort(),
+      positionsByDept: Object.fromEntries(
+        Object.entries(positionsByDept).map(([dept, posSet]) => [dept, Array.from(posSet).sort()])
+      ),
+    };
+
+    res.json(result);
+  } catch (err) {
+    logger.error({ err }, "Routing options error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.get("/tables", requireAuth, async (req, res) => {
   try {
     const tables = await db.select().from(interviewTablesTable).orderBy(interviewTablesTable.tableNo);

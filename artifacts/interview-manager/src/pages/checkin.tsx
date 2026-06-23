@@ -1,37 +1,37 @@
 import { useState, useEffect } from "react";
-import { useLookupCandidate, useCreateCandidate, useCheckinCandidate } from "@workspace/api-client-react";
+import { useLookupCandidate, useCheckinCandidate, useGetRoutingOptions } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, ArrowLeft, CheckCircle2, Camera } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Camera, ChevronRight } from "lucide-react";
 
-type Step = 'HOME' | 'PRE_REGISTERED_LOOKUP' | 'CONFIRMATION';
+type Step = 'HOME' | 'PRE_REGISTERED_LOOKUP' | 'DEPT_POSITION' | 'CONFIRMATION';
+
+const FIXED_DEPTS = ["Solar O&M", "Wind BoP O&M", "R&D"];
 
 export default function Checkin() {
   const [step, setStep] = useState<Step>('HOME');
   const [identifier, setIdentifier] = useState("");
+  const [candidateId, setCandidateId] = useState<number | null>(null);
+  const [candidateName, setCandidateName] = useState("");
 
-  const [name, setName] = useState("");
-  const [mobile, setMobile] = useState("");
-  const [email, setEmail] = useState("");
-  const [position, setPosition] = useState("");
-  const [experience, setExperience] = useState("");
+  const [selectedDept, setSelectedDept] = useState("");
+  const [selectedPosition, setSelectedPosition] = useState("");
 
-  const [tokenResult, setTokenResult] = useState<{ tokenNo: string; name: string; position: string } | null>(null);
+  const [tokenResult, setTokenResult] = useState<{ tokenNo: string; name: string; position: string; department?: string } | null>(null);
   const [countdown, setCountdown] = useState(30);
 
   const lookupMutation = useLookupCandidate();
-  const createMutation = useCreateCandidate();
   const checkinMutation = useCheckinCandidate();
+  const { data: routingOptions, isLoading: routingLoading } = useGetRoutingOptions();
 
   const resetForm = () => {
     setIdentifier("");
-    setName("");
-    setMobile("");
-    setEmail("");
-    setPosition("");
-    setExperience("");
+    setCandidateId(null);
+    setCandidateName("");
+    setSelectedDept("");
+    setSelectedPosition("");
     setTokenResult(null);
     setCountdown(30);
     setStep('HOME');
@@ -53,6 +53,11 @@ export default function Checkin() {
     return () => clearInterval(interval);
   }, [step]);
 
+  // Reset position when dept changes
+  useEffect(() => {
+    setSelectedPosition("");
+  }, [selectedDept]);
+
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!identifier) return;
@@ -62,15 +67,29 @@ export default function Checkin() {
       const candidate = await lookupMutation.mutateAsync({
         data: {
           mobile: !isEmail ? identifier : undefined,
-          email: isEmail ? identifier : undefined
-        }
+          email: isEmail ? identifier : undefined,
+        },
       });
+      setCandidateId(candidate.id);
+      setCandidateName(candidate.name);
+      setStep('DEPT_POSITION');
+    } catch {
+      window.location.href = "https://tally.so/r/WOMlqL";
+    }
+  };
 
-      const result = await checkinMutation.mutateAsync({ id: candidate.id });
+  const handleCheckin = async () => {
+    if (!candidateId || !selectedDept || !selectedPosition) return;
+    try {
+      const result = await checkinMutation.mutateAsync({
+        id: candidateId,
+        data: { department: selectedDept, position: selectedPosition },
+      });
       setTokenResult({
         tokenNo: result.tokenNo,
-        name: candidate.name,
-        position: candidate.position
+        name: candidateName,
+        position: selectedPosition,
+        department: selectedDept,
       });
       setStep('CONFIRMATION');
     } catch {
@@ -81,6 +100,18 @@ export default function Checkin() {
   const handleRegisterRedirect = () => {
     window.location.href = "https://tally.so/r/WOMlqL";
   };
+
+  // Derive departments from routing options; fall back to fixed list
+  const departments = (routingOptions?.departments?.length ?? 0) > 0
+    ? routingOptions!.departments
+    : FIXED_DEPTS;
+
+  // Positions for selected department
+  const availablePositions: string[] = selectedDept && routingOptions?.positionsByDept
+    ? (routingOptions.positionsByDept[selectedDept] ?? [])
+    : [];
+
+  const canCheckin = selectedDept && selectedPosition;
 
   return (
     <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
@@ -95,6 +126,8 @@ export default function Checkin() {
 
         <Card className="border-0 shadow-2xl shadow-zinc-200/50 overflow-hidden bg-white rounded-3xl">
           <CardContent className="p-8 md:p-12">
+
+            {/* ── STEP 1: HOME ── */}
             {step === 'HOME' && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <h2 className="text-2xl font-bold text-center mb-8">Are you pre-registered?</h2>
@@ -116,6 +149,7 @@ export default function Checkin() {
               </div>
             )}
 
+            {/* ── STEP 2: LOOKUP ── */}
             {step === 'PRE_REGISTERED_LOOKUP' && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center">
@@ -141,11 +175,11 @@ export default function Checkin() {
                   <Button
                     type="submit"
                     className="w-full h-16 text-xl font-bold rounded-xl"
-                    disabled={lookupMutation.isPending || checkinMutation.isPending}
+                    disabled={lookupMutation.isPending}
                   >
-                    {lookupMutation.isPending || checkinMutation.isPending ? (
+                    {lookupMutation.isPending ? (
                       <Loader2 className="h-6 w-6 animate-spin" />
-                    ) : "Find & Generate Token"}
+                    ) : "Find My Registration"}
                   </Button>
                 </form>
 
@@ -161,6 +195,108 @@ export default function Checkin() {
               </div>
             )}
 
+            {/* ── STEP 3: DEPARTMENT + POSITION ── */}
+            {step === 'DEPT_POSITION' && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center">
+                  <Button variant="ghost" size="icon" onClick={() => setStep('PRE_REGISTERED_LOOKUP')} className="mr-4 rounded-full h-12 w-12 hover:bg-zinc-100">
+                    <ArrowLeft className="h-6 w-6" />
+                  </Button>
+                  <div>
+                    <h2 className="text-2xl font-bold">Welcome, {candidateName}!</h2>
+                    <p className="text-zinc-500 mt-0.5">Please select your interview department and position</p>
+                  </div>
+                </div>
+
+                {routingLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <div className="space-y-8">
+                    {/* Department selection */}
+                    <div className="space-y-4">
+                      <Label className="text-lg font-semibold">Department *</Label>
+                      <div className="grid grid-cols-1 gap-3">
+                        {departments.map((dept) => (
+                          <button
+                            key={dept}
+                            type="button"
+                            onClick={() => setSelectedDept(dept)}
+                            className={`w-full px-6 py-4 rounded-xl border-2 text-left font-semibold text-lg transition-all ${
+                              selectedDept === dept
+                                ? "border-primary bg-primary/5 text-primary"
+                                : "border-zinc-200 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span>{dept}</span>
+                              {selectedDept === dept && <ChevronRight className="h-5 w-5 text-primary" />}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Position selection — shown only after dept selected */}
+                    {selectedDept && (
+                      <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <Label className="text-lg font-semibold">Position *</Label>
+                        {availablePositions.length === 0 ? (
+                          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-700 text-center">
+                            No positions configured for this department yet.
+                            <br />
+                            <span className="text-sm">Please ask the HR desk for assistance.</span>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 gap-3">
+                            {availablePositions.map((pos) => (
+                              <button
+                                key={pos}
+                                type="button"
+                                onClick={() => setSelectedPosition(pos)}
+                                className={`w-full px-6 py-4 rounded-xl border-2 text-left font-medium text-base transition-all ${
+                                  selectedPosition === pos
+                                    ? "border-primary bg-primary/5 text-primary"
+                                    : "border-zinc-200 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span>{pos}</span>
+                                  {selectedPosition === pos && <ChevronRight className="h-5 w-5 text-primary" />}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Summary + Confirm */}
+                    {canCheckin && (
+                      <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-5 space-y-2">
+                          <p className="text-sm text-zinc-500 font-medium uppercase tracking-wide">Your Selection</p>
+                          <p className="text-lg font-semibold text-zinc-900">{selectedDept}</p>
+                          <p className="text-base text-zinc-700">{selectedPosition}</p>
+                        </div>
+                        <Button
+                          onClick={handleCheckin}
+                          className="w-full h-16 text-xl font-bold rounded-xl"
+                          disabled={checkinMutation.isPending}
+                        >
+                          {checkinMutation.isPending ? (
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                          ) : "Confirm & Get Token"}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── STEP 4: CONFIRMATION ── */}
             {step === 'CONFIRMATION' && tokenResult && (
               <div className="py-8 text-center space-y-8 animate-in zoom-in-95 duration-500">
                 <div className="mx-auto h-24 w-24 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
@@ -169,7 +305,10 @@ export default function Checkin() {
 
                 <div className="space-y-2">
                   <h2 className="text-3xl font-bold text-zinc-900">Welcome, {tokenResult.name}</h2>
-                  <p className="text-xl text-zinc-500">Position: {tokenResult.position}</p>
+                  {tokenResult.department && (
+                    <p className="text-lg text-zinc-500">{tokenResult.department}</p>
+                  )}
+                  <p className="text-xl text-zinc-600 font-medium">{tokenResult.position}</p>
                 </div>
 
                 <div className="bg-zinc-50 p-8 rounded-3xl border-2 border-zinc-100 my-8">
@@ -181,7 +320,9 @@ export default function Checkin() {
                   <Camera className="h-8 w-8 text-amber-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="font-bold text-amber-800 text-lg">Take a Screenshot!</p>
-                    <p className="text-amber-700 mt-1">Please photograph or screenshot your token number <strong>{tokenResult.tokenNo}</strong> so you don't lose your place in the queue.</p>
+                    <p className="text-amber-700 mt-1">
+                      Please photograph or screenshot your token number <strong>{tokenResult.tokenNo}</strong> so you don't lose your place in the queue.
+                    </p>
                   </div>
                 </div>
 
@@ -199,6 +340,7 @@ export default function Checkin() {
                 </p>
               </div>
             )}
+
           </CardContent>
         </Card>
       </div>

@@ -1,6 +1,6 @@
 import { db } from "@workspace/db";
 import { tokenQueueTable, candidatesTable, interviewTablesTable, interviewSessionsTable, announcementsTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
 
 export async function autoAssignToken(): Promise<void> {
@@ -23,9 +23,19 @@ export async function autoAssignToken(): Promise<void> {
 
   if (waitingTokens.length === 0) return;
 
-  let assigned = false;
-
   for (const availableTable of availableTables) {
+    // Parse table's accepted departments (JSON array or legacy string)
+    let tableDepts: string[] = [];
+    try {
+      if (availableTable.department) {
+        const parsed = JSON.parse(availableTable.department);
+        tableDepts = Array.isArray(parsed) ? parsed : [availableTable.department];
+      }
+    } catch {
+      if (availableTable.department) tableDepts = [availableTable.department];
+    }
+
+    // Parse table's accepted positions (JSON array)
     let tablePositions: string[] = [];
     try {
       if (availableTable.positions) {
@@ -35,11 +45,19 @@ export async function autoAssignToken(): Promise<void> {
       tablePositions = [];
     }
 
+    // Find first waiting candidate that matches this table's dept + position filters
     const matchingEntry = waitingTokens.find(({ candidate }) => {
-      if (tablePositions.length === 0) return true;
-      return tablePositions.some(
-        (p) => p.toLowerCase() === (candidate.position || "").toLowerCase()
-      );
+      const deptMatch =
+        tableDepts.length === 0 ||
+        (candidate.department
+          ? tableDepts.some(d => d.toLowerCase() === candidate.department!.toLowerCase())
+          : true);
+
+      const positionMatch =
+        tablePositions.length === 0 ||
+        tablePositions.some(p => p.toLowerCase() === (candidate.position || "").toLowerCase());
+
+      return deptMatch && positionMatch;
     });
 
     if (!matchingEntry) continue;
@@ -81,7 +99,9 @@ export async function autoAssignToken(): Promise<void> {
       candidateName: candidate?.name ?? "Unknown",
     });
 
-    logger.info({ tokenNo: waitingToken.tokenNo, tableNo: availableTable.tableNo }, "Token auto-assigned");
-    assigned = true;
+    logger.info(
+      { tokenNo: waitingToken.tokenNo, tableNo: availableTable.tableNo, dept: candidate.department },
+      "Token auto-assigned"
+    );
   }
 }

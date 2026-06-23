@@ -65,6 +65,7 @@ export const ListCandidatesResponseItem = zod.object({
   "name": zod.string(),
   "mobile": zod.string(),
   "email": zod.string(),
+  "department": zod.string().nullish(),
   "position": zod.string(),
   "experience": zod.string().nullish(),
   "currentCompany": zod.string().nullish(),
@@ -94,6 +95,7 @@ export const CreateCandidateBody = zod.object({
   "name": zod.string(),
   "mobile": zod.string(),
   "email": zod.string(),
+  "department": zod.string().optional(),
   "position": zod.string(),
   "experience": zod.string().optional(),
   "currentCompany": zod.string().optional(),
@@ -119,6 +121,7 @@ export const LookupCandidateResponse = zod.object({
   "name": zod.string(),
   "mobile": zod.string(),
   "email": zod.string(),
+  "department": zod.string().nullish(),
   "position": zod.string(),
   "experience": zod.string().nullish(),
   "currentCompany": zod.string().nullish(),
@@ -148,6 +151,7 @@ export const ImportCandidatesBody = zod.object({
   "name": zod.string(),
   "mobile": zod.string(),
   "email": zod.string(),
+  "department": zod.string().optional(),
   "position": zod.string(),
   "experience": zod.string().optional(),
   "currentCompany": zod.string().optional(),
@@ -181,6 +185,7 @@ export const GetCandidateResponse = zod.object({
   "name": zod.string(),
   "mobile": zod.string(),
   "email": zod.string(),
+  "department": zod.string().nullish(),
   "position": zod.string(),
   "experience": zod.string().nullish(),
   "currentCompany": zod.string().nullish(),
@@ -229,6 +234,7 @@ export const UpdateCandidateResponse = zod.object({
   "name": zod.string(),
   "mobile": zod.string(),
   "email": zod.string(),
+  "department": zod.string().nullish(),
   "position": zod.string(),
   "experience": zod.string().nullish(),
   "currentCompany": zod.string().nullish(),
@@ -257,6 +263,11 @@ export const CheckinCandidateParams = zod.object({
   "id": zod.coerce.number()
 })
 
+export const CheckinCandidateBody = zod.object({
+  "department": zod.string().optional(),
+  "position": zod.string().optional()
+})
+
 export const CheckinCandidateResponse = zod.object({
   "candidate": zod.object({
   "id": zod.number(),
@@ -265,6 +276,7 @@ export const CheckinCandidateResponse = zod.object({
   "name": zod.string(),
   "mobile": zod.string(),
   "email": zod.string(),
+  "department": zod.string().nullish(),
   "position": zod.string(),
   "experience": zod.string().nullish(),
   "currentCompany": zod.string().nullish(),
@@ -286,6 +298,15 @@ export const CheckinCandidateResponse = zod.object({
 }),
   "tokenNo": zod.string(),
   "message": zod.string()
+})
+
+
+/**
+ * @summary Get available departments and positions for check-in routing
+ */
+export const GetRoutingOptionsResponse = zod.object({
+  "departments": zod.array(zod.string()),
+  "positionsByDept": zod.record(zod.string(), zod.array(zod.string()))
 })
 
 

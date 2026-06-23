@@ -64,6 +64,8 @@ export interface Candidate {
   name: string;
   mobile: string;
   email: string;
+  /** @nullable */
+  department?: string | null;
   position: string;
   /** @nullable */
   experience?: string | null;
@@ -102,6 +104,7 @@ export interface CandidateInput {
   name: string;
   mobile: string;
   email: string;
+  department?: string;
   position: string;
   experience?: string;
   currentCompany?: string;
@@ -178,6 +181,13 @@ export interface TokenUpdate {
   status?: string;
   /** @nullable */
   assignedTableId?: number | null;
+}
+
+export type RoutingOptionsPositionsByDept = {[key: string]: string[]};
+
+export interface RoutingOptions {
+  departments: string[];
+  positionsByDept: RoutingOptionsPositionsByDept;
 }
 
 export type InterviewTableStatus = typeof InterviewTableStatus[keyof typeof InterviewTableStatus];
@@ -368,6 +378,11 @@ status?: string;
 date?: string;
 search?: string;
 position?: string;
+};
+
+export type CheckinCandidateBody = {
+  department?: string;
+  position?: string;
 };
 
 export type ListTokensParams = {

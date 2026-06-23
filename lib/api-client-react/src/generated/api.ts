@@ -27,6 +27,7 @@ import type {
   CandidateInput,
   CandidateLookup,
   CandidateUpdate,
+  CheckinCandidateBody,
   CheckinResult,
   DashboardStats,
   HealthStatus,
@@ -40,6 +41,7 @@ import type {
   LoginInput,
   OperationResult,
   PositionStat,
+  RoutingOptions,
   SessionResult,
   SitePosition,
   SitePositionInput,
@@ -745,14 +747,16 @@ export const getCheckinCandidateUrl = (id: number,) => {
 /**
  * @summary Check in a candidate and generate token
  */
-export const checkinCandidate = async (id: number, options?: RequestInit): Promise<CheckinResult> => {
+export const checkinCandidate = async (id: number,
+    checkinCandidateBody?: CheckinCandidateBody, options?: RequestInit): Promise<CheckinResult> => {
 
   return customFetch<CheckinResult>(getCheckinCandidateUrl(id),
   {
     ...options,
-    method: 'POST'
-
-
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      checkinCandidateBody,)
   }
 );}
 
@@ -760,8 +764,8 @@ export const checkinCandidate = async (id: number, options?: RequestInit): Promi
 
 
 export const getCheckinCandidateMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkinCandidate>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof checkinCandidate>>, TError,{id: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkinCandidate>>, TError,{id: number;data?: BodyType<CheckinCandidateBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof checkinCandidate>>, TError,{id: number;data?: BodyType<CheckinCandidateBody>}, TContext> => {
 
 const mutationKey = ['checkinCandidate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -773,10 +777,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkinCandidate>>, {id: number}> = (props) => {
-          const {id} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkinCandidate>>, {id: number;data?: BodyType<CheckinCandidateBody>}> = (props) => {
+          const {id,data} = props ?? {};
 
-          return  checkinCandidate(id,requestOptions)
+          return  checkinCandidate(id,data,requestOptions)
         }
 
 
@@ -787,22 +791,99 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CheckinCandidateMutationResult = NonNullable<Awaited<ReturnType<typeof checkinCandidate>>>
-
+    export type CheckinCandidateMutationBody = BodyType<CheckinCandidateBody> | undefined
     export type CheckinCandidateMutationError = ErrorType<unknown>
 
     /**
  * @summary Check in a candidate and generate token
  */
 export const useCheckinCandidate = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkinCandidate>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkinCandidate>>, TError,{id: number;data?: BodyType<CheckinCandidateBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof checkinCandidate>>,
         TError,
-        {id: number},
+        {id: number;data?: BodyType<CheckinCandidateBody>},
         TContext
       > => {
       return useMutation(getCheckinCandidateMutationOptions(options));
     }
+
+export const getGetRoutingOptionsUrl = () => {
+
+
+
+
+  return `/api/tables/routing-options`
+}
+
+/**
+ * @summary Get available departments and positions for check-in routing
+ */
+export const getRoutingOptions = async ( options?: RequestInit): Promise<RoutingOptions> => {
+
+  return customFetch<RoutingOptions>(getGetRoutingOptionsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRoutingOptionsQueryKey = () => {
+    return [
+    `/api/tables/routing-options`
+    ] as const;
+    }
+
+
+export const getGetRoutingOptionsQueryOptions = <TData = Awaited<ReturnType<typeof getRoutingOptions>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRoutingOptions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRoutingOptionsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRoutingOptions>>> = ({ signal }) => getRoutingOptions({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRoutingOptions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRoutingOptionsQueryResult = NonNullable<Awaited<ReturnType<typeof getRoutingOptions>>>
+export type GetRoutingOptionsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get available departments and positions for check-in routing
+ */
+
+export function useGetRoutingOptions<TData = Awaited<ReturnType<typeof getRoutingOptions>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRoutingOptions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRoutingOptionsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getListTokensUrl = (params?: ListTokensParams,) => {
   const normalizedParams = new URLSearchParams();

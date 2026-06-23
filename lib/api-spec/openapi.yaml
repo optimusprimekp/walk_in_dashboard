@@ -214,6 +214,17 @@ paths:
           required: true
           schema:
             type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                department:
+                  type: string
+                position:
+                  type: string
       responses:
         "200":
           description: Checked in with token
@@ -221,6 +232,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CheckinResult"
+
+  /tables/routing-options:
+    get:
+      operationId: getRoutingOptions
+      tags: [tables]
+      summary: Get available departments and positions for check-in routing
+      responses:
+        "200":
+          description: Routing options
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoutingOptions"
 
   /tokens:
     get:
@@ -685,6 +709,8 @@ components:
           type: string
         email:
           type: string
+        department:
+          type: ["string", "null"]
         position:
           type: string
         experience:
@@ -732,6 +758,8 @@ components:
         mobile:
           type: string
         email:
+          type: string
+        department:
           type: string
         position:
           type: string
@@ -852,6 +880,21 @@ components:
           type: string
         assignedTableId:
           type: ["integer", "null"]
+
+    RoutingOptions:
+      type: object
+      required: [departments, positionsByDept]
+      properties:
+        departments:
+          type: array
+          items:
+            type: string
+        positionsByDept:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
 
     InterviewTable:
       type: object

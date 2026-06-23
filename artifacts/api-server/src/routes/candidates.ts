@@ -267,6 +267,8 @@ router.patch("/candidates/:id", requireAuth, async (req, res) => {
 router.post("/candidates/:id/checkin", async (req, res) => {
   try {
     const id = parseInt(req.params.id);
+    const { department, position } = req.body ?? {};
+
     const [candidate] = await db.select().from(candidatesTable).where(eq(candidatesTable.id, id));
     if (!candidate) return res.status(404).json({ error: "Candidate not found" });
     if (candidate.status === "WAITING" || candidate.status === "ASSIGNED" || candidate.status === "IN_INTERVIEW") {
@@ -289,9 +291,19 @@ router.post("/candidates/:id/checkin", async (req, res) => {
       queuePosition,
       checkinTime: new Date(),
     });
+
+    // Build update payload — override dept/position if provided at check-in
+    const candidateUpdate: Record<string, unknown> = {
+      tokenNo,
+      status: "WAITING",
+      checkinTime: new Date(),
+    };
+    if (department) candidateUpdate.department = department;
+    if (position) candidateUpdate.position = position;
+
     const [updated] = await db
       .update(candidatesTable)
-      .set({ tokenNo, status: "WAITING", checkinTime: new Date() })
+      .set(candidateUpdate)
       .where(eq(candidatesTable.id, id))
       .returning();
     autoAssignToken().catch((e) => logger.error({ err: e }, "Auto assign error"));

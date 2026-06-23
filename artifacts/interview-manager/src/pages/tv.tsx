@@ -25,7 +25,7 @@ function getCheckinUrl() {
 
 export default function TvDisplay() {
   const { data, isLoading } = useGetTvDisplay({
-    query: { refetchInterval: 5000 },
+    query: { refetchInterval: 5000 } as any,
   });
 
   const [currentTime, setCurrentTime] = useState(new Date());
