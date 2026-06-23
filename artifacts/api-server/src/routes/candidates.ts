@@ -57,7 +57,7 @@ router.get("/candidates", requireAuth, async (req: any, res) => {
   }
 });
 
-router.post("/candidates", requireAuth, async (req, res) => {
+router.post("/candidates", async (req, res) => {
   try {
     const { name, mobile, email, position, experience, currentCompany, currentDesignation, location, scheduledDate, status } = req.body;
     if (!name || !mobile || !email || !position) {
