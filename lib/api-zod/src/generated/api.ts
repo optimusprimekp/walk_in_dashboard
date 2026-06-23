@@ -695,6 +695,7 @@ export const GetPositionStatsResponse = zod.array(GetPositionStatsResponseItem)
  */
 export const ListSitePositionsResponseItem = zod.object({
   "id": zod.number(),
+  "department": zod.string(),
   "site": zod.string(),
   "position": zod.string(),
   "openings": zod.number(),
@@ -707,6 +708,7 @@ export const ListSitePositionsResponse = zod.array(ListSitePositionsResponseItem
  * @summary Create a site position opening
  */
 export const CreateSitePositionBody = zod.object({
+  "department": zod.string(),
   "site": zod.string(),
   "position": zod.string(),
   "openings": zod.number()
@@ -721,6 +723,7 @@ export const UpdateSitePositionParams = zod.object({
 })
 
 export const UpdateSitePositionBody = zod.object({
+  "department": zod.string(),
   "site": zod.string(),
   "position": zod.string(),
   "openings": zod.number()
@@ -728,6 +731,7 @@ export const UpdateSitePositionBody = zod.object({
 
 export const UpdateSitePositionResponse = zod.object({
   "id": zod.number(),
+  "department": zod.string(),
   "site": zod.string(),
   "position": zod.string(),
   "openings": zod.number(),

@@ -1057,10 +1057,12 @@ components:
 
     SitePosition:
       type: object
-      required: [id, site, position, openings, createdAt]
+      required: [id, department, site, position, openings, createdAt]
       properties:
         id:
           type: integer
+        department:
+          type: string
         site:
           type: string
         position:
@@ -1072,8 +1074,10 @@ components:
 
     SitePositionInput:
       type: object
-      required: [site, position, openings]
+      required: [department, site, position, openings]
       properties:
+        department:
+          type: string
         site:
           type: string
         position:

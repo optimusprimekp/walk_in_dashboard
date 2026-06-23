@@ -344,6 +344,7 @@ export interface Announcement {
 
 export interface SitePosition {
   id: number;
+  department: string;
   site: string;
   position: string;
   openings: number;
@@ -351,6 +352,7 @@ export interface SitePosition {
 }
 
 export interface SitePositionInput {
+  department: string;
   site: string;
   position: string;
   openings: number;

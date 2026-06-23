@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 
 export const sitePositionsTable = pgTable("site_positions", {
   id: serial("id").primaryKey(),
+  department: text("department").notNull().default(""),
   site: text("site").notNull(),
   position: text("position").notNull(),
   openings: integer("openings").notNull().default(1),

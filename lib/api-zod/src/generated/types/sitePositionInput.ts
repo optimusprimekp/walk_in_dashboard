@@ -7,6 +7,7 @@
  */
 
 export interface SitePositionInput {
+  department: string;
   site: string;
   position: string;
   openings: number;
