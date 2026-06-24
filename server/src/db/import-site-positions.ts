@@ -1,8 +1,13 @@
 import "dotenv/config";
 import * as path from "node:path";
-import * as XLSX from "xlsx";
+import { createRequire } from "node:module";
 import { and, eq } from "drizzle-orm";
 import { db, sitePositionsTable } from "./index";
+
+// SheetJS ships as CommonJS; the ESM build it resolves under `import * as`
+// omits `readFile` (filesystem access). Load the CJS build so `readFile` works.
+const require = createRequire(import.meta.url);
+const XLSX = require("xlsx") as typeof import("xlsx");
 
 /**
  * Bulk-import the O&M manpower sheet into the site_positions table.
