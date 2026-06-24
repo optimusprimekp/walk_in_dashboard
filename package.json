@@ -12,7 +12,8 @@
     "start": "npm run start --prefix server",
     "typecheck": "npm run typecheck --prefix client && npm run typecheck --prefix server",
     "db:push": "npm run db:push --prefix server",
-    "db:seed": "npm run db:seed --prefix server"
+    "db:seed": "npm run db:seed --prefix server",
+    "import:sites": "npm run import:sites --prefix server --"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
