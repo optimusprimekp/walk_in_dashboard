@@ -6,7 +6,7 @@ import {
   useUpdateTable,
   useDeleteTable,
   useListSitePositions,
-} from "@workspace/api-client-react";
+} from "@/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

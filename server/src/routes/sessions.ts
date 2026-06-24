@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
+import { db } from "../db";
 import {
   interviewSessionsTable,
   candidatesTable,
   interviewTablesTable,
   tokenQueueTable,
-} from "@workspace/db";
+} from "../db";
 import { eq, and } from "drizzle-orm";
 import { requireAuth } from "./auth";
 import { logger } from "../lib/logger";

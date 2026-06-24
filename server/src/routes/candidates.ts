@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
-import { candidatesTable, tokenQueueTable } from "@workspace/db";
+import { db } from "../db";
+import { candidatesTable, tokenQueueTable } from "../db";
 import { eq, and, ilike, or, sql } from "drizzle-orm";
 import { requireAuth } from "./auth";
 import { logger } from "../lib/logger";
@@ -40,7 +40,7 @@ router.get("/candidates", requireAuth, async (req: any, res) => {
       candidates.map(async (c) => {
         let assignedTableNo = null;
         if (c.assignedTableId) {
-          const { interviewTablesTable } = await import("@workspace/db");
+          const { interviewTablesTable } = await import("../db");
           const [table] = await db
             .select({ tableNo: interviewTablesTable.tableNo })
             .from(interviewTablesTable)

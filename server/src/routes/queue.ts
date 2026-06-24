@@ -1,5 +1,5 @@
-import { db } from "@workspace/db";
-import { tokenQueueTable, candidatesTable, interviewTablesTable, interviewSessionsTable, announcementsTable } from "@workspace/db";
+import { db } from "../db";
+import { tokenQueueTable, candidatesTable, interviewTablesTable, interviewSessionsTable, announcementsTable } from "../db";
 import { eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
 

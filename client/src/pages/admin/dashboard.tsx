@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, Link } from "wouter";
-import { useGetDashboardStats } from "@workspace/api-client-react";
+import { useGetDashboardStats } from "@/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, UserCheck, Clock, CheckCircle2, UserX, Loader2, QrCode, Printer, X } from "lucide-react";

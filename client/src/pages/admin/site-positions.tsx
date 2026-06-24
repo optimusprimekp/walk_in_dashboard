@@ -5,7 +5,7 @@ import {
   useCreateSitePosition,
   useUpdateSitePosition,
   useDeleteSitePosition,
-} from "@workspace/api-client-react";
+} from "@/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

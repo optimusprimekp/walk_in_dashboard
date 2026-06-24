@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useGetTvDisplay } from "@workspace/api-client-react";
+import { useGetTvDisplay } from "@/api";
 import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import QRCode from "qrcode";

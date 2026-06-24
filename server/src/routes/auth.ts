@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
-import { usersTable } from "@workspace/db";
+import { db } from "../db";
+import { usersTable } from "../db";
 import { eq } from "drizzle-orm";
 import { createHash } from "crypto";
 import { logger } from "../lib/logger";

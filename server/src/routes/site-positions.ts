@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
-import { sitePositionsTable } from "@workspace/db";
+import { db } from "../db";
+import { sitePositionsTable } from "../db";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "./auth";
 import { logger } from "../lib/logger";
