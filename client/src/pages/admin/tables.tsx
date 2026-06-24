@@ -148,7 +148,25 @@ export default function Tables() {
     query: { refetchInterval: 30000 } as any,
   });
 
-  const allPositions = [...new Set((sitePositions || []).map(sp => sp.position))].sort();
+  // Positions available for the selected departments (department-wise).
+  const availablePositions = newDepartments.length === 0
+    ? []
+    : [...new Set((sitePositions || [])
+        .filter(sp => newDepartments.includes(sp.department))
+        .map(sp => sp.position))].sort();
+
+  // Drop any chosen positions that no longer belong to the selected departments.
+  useEffect(() => {
+    setNewPositions(prev => {
+      if (newDepartments.length === 0) return [];
+      const valid = new Set(
+        (sitePositions || [])
+          .filter(sp => newDepartments.includes(sp.department))
+          .map(sp => sp.position)
+      );
+      return prev.filter(p => valid.has(p));
+    });
+  }, [newDepartments, sitePositions]);
 
   const createMutation = useCreateTable();
   const updateMutation = useUpdateTable();
@@ -275,11 +293,17 @@ export default function Tables() {
                       Candidate Positions
                       <span className="text-zinc-400 font-normal ml-1">(filter which roles this table handles)</span>
                     </Label>
-                    <PositionMultiSelect
-                      allPositions={allPositions}
-                      value={newPositions}
-                      onChange={setNewPositions}
-                    />
+                    {newDepartments.length === 0 ? (
+                      <div className="text-sm text-zinc-400 p-3 border border-dashed border-zinc-200 rounded-lg text-center">
+                        Select a department above to see its positions.
+                      </div>
+                    ) : (
+                      <PositionMultiSelect
+                        allPositions={availablePositions}
+                        value={newPositions}
+                        onChange={setNewPositions}
+                      />
+                    )}
                   </div>
                 </div>
 
