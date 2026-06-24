@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "../load-env";
 import * as path from "node:path";
 import { createRequire } from "node:module";
 import { and, eq } from "drizzle-orm";

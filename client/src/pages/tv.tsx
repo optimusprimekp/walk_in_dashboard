@@ -47,15 +47,8 @@ export default function TvDisplay() {
   const calling = data.nowCalling ?? [];
   const queueTokens = data.tokens ?? [];
 
-  // Grid columns for now-calling cards based on count
-  const callingColClass =
-    calling.length === 1
-      ? "grid-cols-1"
-      : calling.length === 2
-      ? "grid-cols-2"
-      : calling.length === 3
-      ? "grid-cols-3"
-      : "grid-cols-4";
+  // Show up to 10 calling tokens at once as compact rows.
+  const visibleCalling = calling.slice(0, 10);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex flex-col overflow-hidden font-sans select-none">
@@ -79,58 +72,52 @@ export default function TvDisplay() {
         </div>
       </header>
 
-      {/* ── NOW CALLING — full-width, dominant section ── */}
+      {/* ── NOW CALLING — compact rows, up to 10 at a time ── */}
       <div className="shrink-0 px-6 pt-6 pb-4">
         <div className="flex items-center gap-3 mb-4">
           <div className="h-4 w-4 rounded-full bg-primary animate-pulse" />
           <h2 className="text-3xl font-black tracking-widest text-primary uppercase">Now Calling</h2>
+          {calling.length > 0 && (
+            <span className="ml-1 text-lg font-semibold text-zinc-500">{calling.length} active</span>
+          )}
         </div>
 
         {calling.length > 0 ? (
-          <div className={`grid ${callingColClass} gap-4`}>
-            {calling.map((token) => (
+          <div className="space-y-2">
+            {visibleCalling.map((token) => (
               <div
                 key={token.id}
-                className="rounded-2xl overflow-hidden shadow-2xl border border-primary/30"
+                className="flex items-center gap-4 rounded-xl bg-primary px-6 py-2.5 shadow-lg"
               >
-                {/* Top: token + name */}
-                <div className="bg-primary px-8 py-6 flex flex-col items-center text-center">
-                  <span className="text-sm font-bold tracking-widest text-primary-foreground/70 uppercase mb-1">
-                    Token Number
-                  </span>
-                  <span
-                    className={`font-black text-white tracking-tighter leading-none ${
-                      calling.length === 1
-                        ? "text-[12rem]"
-                        : calling.length === 2
-                        ? "text-[8rem]"
-                        : "text-[6rem]"
-                    }`}
-                    style={{ lineHeight: 1 }}
-                  >
-                    {token.tokenNo}
-                  </span>
-                  <span className="text-xl font-semibold text-primary-foreground/90 mt-2 truncate max-w-full">
-                    {token.candidateName}
-                  </span>
+                {/* Token number */}
+                <div className="flex items-baseline gap-2 w-40 shrink-0">
+                  <span className="text-xs font-bold uppercase tracking-widest text-primary-foreground/60">Token</span>
+                  <span className="text-4xl font-black text-white tracking-tighter leading-none">{token.tokenNo}</span>
                 </div>
 
-                {/* Bottom: table number */}
-                <div className="bg-white flex justify-between items-center px-8 py-4">
-                  <span className="text-black font-bold text-xl tracking-wide uppercase">Proceed To</span>
-                  <span
-                    className={`font-black text-primary ${
-                      calling.length === 1 ? "text-6xl" : "text-4xl"
-                    }`}
-                  >
+                {/* Candidate name */}
+                <div className="flex-1 min-w-0 text-2xl font-semibold text-white truncate">
+                  {token.candidateName}
+                </div>
+
+                {/* Table */}
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-sm font-bold uppercase tracking-wide text-primary-foreground/70">Proceed To</span>
+                  <span className="bg-white text-primary font-black text-2xl px-4 py-1 rounded-lg whitespace-nowrap">
                     TABLE {token.assignedTableNo}
                   </span>
                 </div>
               </div>
             ))}
+
+            {calling.length > visibleCalling.length && (
+              <div className="text-center text-zinc-500 font-semibold text-sm pt-1">
+                + {calling.length - visibleCalling.length} more being called
+              </div>
+            )}
           </div>
         ) : (
-          <div className="h-36 border-2 border-dashed border-white/10 rounded-2xl flex items-center justify-center text-white/30 text-2xl font-semibold tracking-wide">
+          <div className="h-24 border-2 border-dashed border-white/10 rounded-2xl flex items-center justify-center text-white/30 text-2xl font-semibold tracking-wide">
             Waiting for candidates...
           </div>
         )}

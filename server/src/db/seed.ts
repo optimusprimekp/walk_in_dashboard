@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "../load-env";
 import { createHash } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db, usersTable } from "./index";
