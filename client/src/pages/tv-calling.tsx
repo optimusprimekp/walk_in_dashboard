@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useGetTvDisplay } from "@/api";
 import { Loader2 } from "lucide-react";
+import { FullscreenButton } from "@/components/fullscreen-button";
 
 export default function TvCalling() {
   const { data, isLoading } = useGetTvDisplay({
@@ -34,13 +35,16 @@ export default function TvCalling() {
             <p className="text-zinc-400 font-medium tracking-wide text-sm">Now Calling</p>
           </div>
         </div>
-        <div className="text-right">
-          <div className="text-4xl font-bold font-mono tracking-tighter text-zinc-100">
-            {now.toLocaleTimeString("en-US", { hour12: false })}
+        <div className="flex items-center gap-5">
+          <div className="text-right">
+            <div className="text-4xl font-bold font-mono tracking-tighter text-zinc-100">
+              {now.toLocaleTimeString("en-US", { hour12: false })}
+            </div>
+            <div className="text-zinc-400 font-medium text-sm">
+              {now.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+            </div>
           </div>
-          <div className="text-zinc-400 font-medium text-sm">
-            {now.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
-          </div>
+          <FullscreenButton />
         </div>
       </header>
 

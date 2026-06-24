@@ -51,7 +51,7 @@ export default function OpeningsDashboard() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-5xl">
+      <main className="container mx-auto px-4 py-8 max-w-[1700px]">
         {isLoading ? (
           <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
         ) : visible.length === 0 ? (
@@ -59,10 +59,10 @@ export default function OpeningsDashboard() {
             No candidates selected yet.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
             {visible.map((site) => (
               <Card key={site.site} className="border-zinc-200 bg-white shadow-sm">
-                <CardContent className="pt-5 pb-5">
+                <CardContent className="pt-4 pb-4 px-4">
                   <div className="flex items-start justify-between gap-3 mb-4">
                     <div className="flex items-center gap-2 min-w-0">
                       <MapPin className="w-4 h-4 text-primary flex-shrink-0" />

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useGetTvDisplay } from "@/api";
 import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { FullscreenButton } from "@/components/fullscreen-button";
 import QRCode from "qrcode";
 
 function QrCanvas({ url, size = 100 }: { url: string; size?: number }) {
@@ -62,13 +63,16 @@ export default function TvDisplay() {
             <p className="text-zinc-400 font-medium tracking-wide text-sm">Walk-In Interview — Queue Status</p>
           </div>
         </div>
-        <div className="text-right">
-          <div className="text-4xl font-bold font-mono tracking-tighter text-zinc-100">
-            {currentTime.toLocaleTimeString("en-US", { hour12: false })}
+        <div className="flex items-center gap-5">
+          <div className="text-right">
+            <div className="text-4xl font-bold font-mono tracking-tighter text-zinc-100">
+              {currentTime.toLocaleTimeString("en-US", { hour12: false })}
+            </div>
+            <div className="text-zinc-400 font-medium text-sm">
+              {currentTime.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+            </div>
           </div>
-          <div className="text-zinc-400 font-medium text-sm">
-            {currentTime.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
-          </div>
+          <FullscreenButton />
         </div>
       </header>
 
