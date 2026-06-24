@@ -3,6 +3,34 @@ import { useGetTvDisplay } from "@/api";
 import { Loader2 } from "lucide-react";
 import { FullscreenButton } from "@/components/fullscreen-button";
 
+type CallToken = {
+  id: number;
+  tokenNo: string;
+  candidateName?: string;
+  assignedTableNo?: number | null;
+  status?: string;
+};
+
+function CallingBox({ token, inInterview }: { token: CallToken; inInterview: boolean }) {
+  return (
+    <div className="rounded-xl overflow-hidden shadow-lg border border-white/10">
+      <div className={`px-3 py-3 flex flex-col items-center text-center ${inInterview ? "bg-emerald-600" : "bg-primary"}`}>
+        <span className="text-[10px] font-bold tracking-widest text-white/70 uppercase">Token</span>
+        <span className="text-4xl font-black text-white tracking-tighter leading-none">{token.tokenNo}</span>
+        <span className="text-sm font-semibold text-white/90 mt-1 truncate max-w-full">{token.candidateName}</span>
+      </div>
+      <div className="bg-white flex justify-between items-center px-3 py-2">
+        <span className="text-black font-bold text-[10px] tracking-wide uppercase">
+          {inInterview ? "In Interview" : "Proceed To"}
+        </span>
+        <span className={`font-black text-xl whitespace-nowrap ${inInterview ? "text-emerald-700" : "text-primary"}`}>
+          TABLE {token.assignedTableNo}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function TvCalling() {
   const { data, isLoading } = useGetTvDisplay({
     query: { refetchInterval: 5000 } as any,
@@ -15,18 +43,20 @@ export default function TvCalling() {
 
   if (isLoading && !data) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="h-screen bg-black flex items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
   if (!data) return null;
 
-  const tokens = data.tokens ?? [];
-  const calling = tokens.filter((t) => t.status === "ASSIGNED" || t.status === "IN_INTERVIEW");
+  const byTable = (a: CallToken, b: CallToken) => (a.assignedTableNo ?? 0) - (b.assignedTableNo ?? 0);
+  const tokens = (data.tokens ?? []) as CallToken[];
+  const inInterview = tokens.filter((t) => t.status === "IN_INTERVIEW").sort(byTable);
+  const assigned = tokens.filter((t) => t.status === "ASSIGNED").sort(byTable);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex flex-col font-sans select-none">
+    <div className="h-screen bg-zinc-950 text-white flex flex-col font-sans select-none overflow-hidden">
       <header className="px-8 py-4 border-b border-white/10 flex justify-between items-center bg-black shrink-0">
         <div className="flex items-center gap-4">
           <img src="/kp-logo.png" alt="KP Group" className="h-12 w-12 object-contain bg-white rounded p-0.5" />
@@ -48,41 +78,46 @@ export default function TvCalling() {
         </div>
       </header>
 
-      <div className="flex-1 px-6 py-6">
-        <div className="flex items-center gap-3 mb-5">
-          <div className="h-4 w-4 rounded-full bg-primary animate-pulse" />
-          <h2 className="text-3xl font-black tracking-widest text-primary uppercase">Now Calling</h2>
-          <span className="ml-1 text-lg font-semibold text-zinc-500">{calling.length} active</span>
-        </div>
+      <div className="flex-1 min-h-0 grid grid-cols-2 gap-6 px-6 py-6 overflow-hidden">
+        {/* LEFT — In Interview */}
+        <section className="flex flex-col min-h-0">
+          <div className="flex items-center gap-3 mb-4 shrink-0">
+            <div className="h-4 w-4 rounded-full bg-emerald-500 animate-pulse" />
+            <h2 className="text-2xl font-black tracking-widest text-emerald-400 uppercase">In Interview</h2>
+            <span className="text-base font-semibold text-zinc-500">{inInterview.length}</span>
+          </div>
+          <div className="flex-1 min-h-0 overflow-hidden">
+            {inInterview.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3">
+                {inInterview.map((t) => <CallingBox key={t.id} token={t} inInterview />)}
+              </div>
+            ) : (
+              <div className="h-40 border-2 border-dashed border-white/10 rounded-2xl flex items-center justify-center text-white/30 text-xl font-semibold">
+                No interviews in progress
+              </div>
+            )}
+          </div>
+        </section>
 
-        {calling.length > 0 ? (
-          <div className="grid grid-cols-5 gap-3">
-            {calling.map((token) => {
-              const inInterview = token.status === "IN_INTERVIEW";
-              return (
-                <div key={token.id} className="rounded-xl overflow-hidden shadow-lg border border-white/10">
-                  <div className={`px-3 py-3 flex flex-col items-center text-center ${inInterview ? "bg-emerald-600" : "bg-primary"}`}>
-                    <span className="text-[10px] font-bold tracking-widest text-white/70 uppercase">Token</span>
-                    <span className="text-4xl font-black text-white tracking-tighter leading-none">{token.tokenNo}</span>
-                    <span className="text-sm font-semibold text-white/90 mt-1 truncate max-w-full">{token.candidateName}</span>
-                  </div>
-                  <div className="bg-white flex justify-between items-center px-3 py-2">
-                    <span className="text-black font-bold text-[10px] tracking-wide uppercase">
-                      {inInterview ? "In Interview" : "Proceed To"}
-                    </span>
-                    <span className={`font-black text-xl whitespace-nowrap ${inInterview ? "text-emerald-700" : "text-primary"}`}>
-                      TABLE {token.assignedTableNo}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+        {/* RIGHT — Proceed To (assigned) */}
+        <section className="flex flex-col min-h-0 border-l border-white/10 pl-6">
+          <div className="flex items-center gap-3 mb-4 shrink-0">
+            <div className="h-4 w-4 rounded-full bg-primary animate-pulse" />
+            <h2 className="text-2xl font-black tracking-widest text-primary uppercase">Now Calling</h2>
+            <span className="text-base font-semibold text-zinc-500">{assigned.length}</span>
           </div>
-        ) : (
-          <div className="h-48 border-2 border-dashed border-white/10 rounded-2xl flex items-center justify-center text-white/30 text-2xl font-semibold tracking-wide">
-            Waiting for candidates…
+          <div className="flex-1 min-h-0 overflow-hidden">
+            {assigned.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3">
+                {assigned.map((t) => <CallingBox key={t.id} token={t} inInterview={false} />)}
+              </div>
+            ) : (
+              <div className="h-40 border-2 border-dashed border-white/10 rounded-2xl flex items-center justify-center text-white/30 text-xl font-semibold">
+                Waiting for candidates…
+              </div>
+            )}
           </div>
-        )}
+        </section>
       </div>
     </div>
   );
