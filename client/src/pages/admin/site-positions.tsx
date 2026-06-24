@@ -44,6 +44,7 @@ export default function SitePositionsPage() {
   const [newOpenings, setNewOpenings] = useState("1");
   const [formError, setFormError] = useState("");
   const [editState, setEditState] = useState<EditState>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
@@ -64,7 +65,36 @@ export default function SitePositionsPage() {
     .map(sp => sp.site)
   )].sort();
 
-  const handleAdd = (e: React.FormEvent) => {
+  const closeDialog = () => {
+    setIsAddOpen(false);
+    setEditingId(null);
+    setNewSite("");
+    setNewPosition("");
+    setNewOpenings("1");
+    setFormError("");
+  };
+
+  const openAdd = (dept: string, site = "") => {
+    setEditingId(null);
+    setNewDept(dept);
+    setNewSite(site);
+    setNewPosition("");
+    setNewOpenings("1");
+    setFormError("");
+    setIsAddOpen(true);
+  };
+
+  const openEdit = (sp: { id: number; department: string; site: string; position: string; openings: number }) => {
+    setEditingId(sp.id);
+    setNewDept(sp.department);
+    setNewSite(sp.site);
+    setNewPosition(sp.position);
+    setNewOpenings(String(sp.openings));
+    setFormError("");
+    setIsAddOpen(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const site = newSite.trim();
     const position = newPosition.trim();
@@ -72,7 +102,8 @@ export default function SitePositionsPage() {
     if (!position) { setFormError("Position is required."); return; }
 
     const duplicate = (sitePositions || []).find(
-      sp => sp.department === newDept &&
+      sp => sp.id !== editingId &&
+            sp.department === newDept &&
             sp.site.toLowerCase() === site.toLowerCase() &&
             sp.position.toLowerCase() === position.toLowerCase()
     );
@@ -82,19 +113,23 @@ export default function SitePositionsPage() {
     }
 
     setFormError("");
-    createMutation.mutate(
-      { data: { department: newDept, site, position, openings: parseInt(newOpenings) || 1 } },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries();
-          setIsAddOpen(false);
-          setNewSite("");
-          setNewPosition("");
-          setNewOpenings("1");
-          setFormError("");
-        },
-      }
-    );
+    const openings = parseInt(newOpenings) || 1;
+    const onSuccess = () => {
+      queryClient.invalidateQueries();
+      closeDialog();
+    };
+
+    if (editingId !== null) {
+      updateMutation.mutate(
+        { id: editingId, data: { department: newDept, site, position, openings } as any },
+        { onSuccess }
+      );
+    } else {
+      createMutation.mutate(
+        { data: { department: newDept, site, position, openings } },
+        { onSuccess }
+      );
+    }
   };
 
   const handleSaveOpenings = (id: number) => {
@@ -126,13 +161,11 @@ export default function SitePositionsPage() {
             </div>
           </div>
 
-          <Dialog open={isAddOpen} onOpenChange={(open) => { setIsAddOpen(open); if (!open) setFormError(""); }}>
-            <DialogTrigger asChild>
-              <Button className="gap-2"><Plus className="w-4 h-4" /> Add Position</Button>
-            </DialogTrigger>
+          <Dialog open={isAddOpen} onOpenChange={(open) => { if (open) setIsAddOpen(true); else closeDialog(); }}>
+            <Button className="gap-2" onClick={() => openAdd(DEPARTMENTS[0])}><Plus className="w-4 h-4" /> Add Position</Button>
             <DialogContent className="max-w-sm">
-              <DialogHeader><DialogTitle>Add Opening</DialogTitle></DialogHeader>
-              <form onSubmit={handleAdd} className="space-y-4 py-2">
+              <DialogHeader><DialogTitle>{editingId !== null ? "Edit Position" : "Add Opening"}</DialogTitle></DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4 py-2">
 
                 {/* Department — fixed 3 */}
                 <div className="space-y-2">
@@ -144,7 +177,7 @@ export default function SitePositionsPage() {
                         <button
                           key={dept}
                           type="button"
-                          onClick={() => { setNewDept(dept); setNewSite(""); setFormError(""); }}
+                          onClick={() => { setNewDept(dept); if (editingId === null) setNewSite(""); setFormError(""); }}
                           className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border-2 text-sm font-semibold text-left transition-all ${
                             newDept === dept ? `${s.badge} ring-2 ring-offset-1 ring-current` : "border-zinc-200 bg-zinc-50 text-zinc-600 hover:bg-zinc-100"
                           }`}
@@ -211,9 +244,9 @@ export default function SitePositionsPage() {
                 )}
 
                 <DialogFooter>
-                  <Button type="submit" disabled={createMutation.isPending} className="w-full h-11">
-                    {createMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    Save Opening
+                  <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="w-full h-11">
+                    {(createMutation.isPending || updateMutation.isPending) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    {editingId !== null ? "Save Changes" : "Save Opening"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -246,7 +279,7 @@ export default function SitePositionsPage() {
                       {deptOpenings} opening{deptOpenings !== 1 ? "s" : ""}
                     </Badge>
                     <button
-                      onClick={() => { setNewDept(dept); setNewSite(""); setIsAddOpen(true); }}
+                      onClick={() => openAdd(dept)}
                       className="ml-auto text-xs text-primary hover:underline font-medium flex items-center gap-1"
                     >
                       <Plus className="w-3 h-3" /> Add position
@@ -256,7 +289,7 @@ export default function SitePositionsPage() {
                   {siteNames.length === 0 ? (
                     <div className="border-2 border-dashed border-zinc-200 rounded-xl p-8 text-center text-zinc-400 text-sm">
                       No positions yet for {dept}.{" "}
-                      <button onClick={() => { setNewDept(dept); setIsAddOpen(true); }}
+                      <button onClick={() => openAdd(dept)}
                         className="text-primary hover:underline font-medium">Add one →</button>
                     </div>
                   ) : (
@@ -272,7 +305,7 @@ export default function SitePositionsPage() {
                               <span className="font-semibold text-zinc-800">{site}</span>
                               <span className="text-xs text-zinc-400">{siteOpenings} opening{siteOpenings !== 1 ? "s" : ""}</span>
                               <button
-                                onClick={() => { setNewDept(dept); setNewSite(site); setIsAddOpen(true); }}
+                                onClick={() => openAdd(dept, site)}
                                 className="text-xs text-zinc-400 hover:text-primary ml-2 flex items-center gap-0.5"
                               >
                                 <Plus className="w-3 h-3" /> role
@@ -288,7 +321,15 @@ export default function SitePositionsPage() {
                                       <Briefcase className="w-4 h-4 text-zinc-400 flex-shrink-0 mt-0.5" />
                                       <span className="font-semibold text-sm text-zinc-900 flex-1">{sp.position}</span>
                                       <button
+                                        onClick={() => openEdit(sp)}
+                                        title="Edit position"
+                                        className="text-zinc-300 hover:text-primary opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                                      >
+                                        <Pencil className="w-4 h-4" />
+                                      </button>
+                                      <button
                                         onClick={() => handleDelete(sp.id, sp.position)}
+                                        title="Delete position"
                                         className="text-zinc-200 hover:text-destructive opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
                                       >
                                         <Trash2 className="w-4 h-4" />

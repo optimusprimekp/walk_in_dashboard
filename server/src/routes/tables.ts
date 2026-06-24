@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "../db";
-import { interviewTablesTable, candidatesTable } from "../db";
+import { interviewTablesTable, candidatesTable, sitePositionsTable } from "../db";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "./auth";
 import { logger } from "../lib/logger";
@@ -29,46 +29,22 @@ async function enrichTable(table: any) {
 
 router.get("/tables/routing-options", async (_req, res) => {
   try {
-    const tables = await db
-      .select({ department: interviewTablesTable.department, positions: interviewTablesTable.positions })
-      .from(interviewTablesTable)
-      .where(eq(interviewTablesTable.status, "AVAILABLE"));
-
-    // Also include BUSY tables so options show even when all panels are occupied
-    const allTables = await db
-      .select({ department: interviewTablesTable.department, positions: interviewTablesTable.positions })
-      .from(interviewTablesTable);
+    // Build the check-in department/position options from the managed
+    // site_positions data, so each department only exposes its own positions.
+    const rows = await db
+      .select({ department: sitePositionsTable.department, position: sitePositionsTable.position })
+      .from(sitePositionsTable);
 
     const departmentsSet = new Set<string>();
     const positionsByDept: Record<string, Set<string>> = {};
 
-    for (const t of allTables) {
-      let depts: string[] = [];
-      try {
-        if (t.department) {
-          const parsed = JSON.parse(t.department);
-          depts = Array.isArray(parsed) ? parsed : [t.department];
-        }
-      } catch {
-        if (t.department) depts = [t.department];
-      }
-
-      let positions: string[] = [];
-      try {
-        if (t.positions) {
-          positions = JSON.parse(t.positions) as string[];
-        }
-      } catch {
-        positions = [];
-      }
-
-      for (const dept of depts) {
-        departmentsSet.add(dept);
-        if (!positionsByDept[dept]) positionsByDept[dept] = new Set<string>();
-        for (const pos of positions) {
-          positionsByDept[dept].add(pos);
-        }
-      }
+    for (const r of rows) {
+      const dept = r.department?.trim();
+      const pos = r.position?.trim();
+      if (!dept) continue;
+      departmentsSet.add(dept);
+      if (!positionsByDept[dept]) positionsByDept[dept] = new Set<string>();
+      if (pos) positionsByDept[dept].add(pos);
     }
 
     const result = {
