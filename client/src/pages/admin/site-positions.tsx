@@ -65,6 +65,13 @@ export default function SitePositionsPage() {
     .map(sp => sp.site)
   )].sort();
 
+  // Suggestions for the site field: narrow by what's typed, cap the list so the
+  // dialog stays compact even with dozens of sites.
+  const siteQuery = newSite.trim().toLowerCase();
+  const siteSuggestions = sitesInDept
+    .filter(s => !siteQuery || s.toLowerCase().includes(siteQuery))
+    .slice(0, 8);
+
   const closeDialog = () => {
     setIsAddOpen(false);
     setEditingId(null);
@@ -163,7 +170,7 @@ export default function SitePositionsPage() {
 
           <Dialog open={isAddOpen} onOpenChange={(open) => { if (open) setIsAddOpen(true); else closeDialog(); }}>
             <Button className="gap-2" onClick={() => openAdd(DEPARTMENTS[0])}><Plus className="w-4 h-4" /> Add Position</Button>
-            <DialogContent className="max-w-sm">
+            <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto">
               <DialogHeader><DialogTitle>{editingId !== null ? "Edit Position" : "Add Opening"}</DialogTitle></DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4 py-2">
 
@@ -208,15 +215,24 @@ export default function SitePositionsPage() {
                   <datalist id="site-datalist">
                     {sitesInDept.map(s => <option key={s} value={s} />)}
                   </datalist>
-                  {sitesInDept.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      <span className="text-xs text-zinc-400">Existing in {newDept}:</span>
-                      {sitesInDept.map(s => (
-                        <button key={s} type="button" onClick={() => setNewSite(s)}
-                          className="text-xs px-2 py-0.5 bg-zinc-100 hover:bg-primary/10 border border-zinc-200 hover:border-primary/30 rounded-full text-zinc-700 hover:text-primary transition-colors">
-                          {s}
-                        </button>
-                      ))}
+                  {siteSuggestions.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-xs text-zinc-400">
+                        {siteQuery ? "Matching sites:" : `Existing in ${newDept}:`}
+                      </span>
+                      <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                        {siteSuggestions.map(s => (
+                          <button key={s} type="button" onClick={() => setNewSite(s)}
+                            className="text-xs px-2 py-0.5 bg-zinc-100 hover:bg-primary/10 border border-zinc-200 hover:border-primary/30 rounded-full text-zinc-700 hover:text-primary transition-colors">
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                      {sitesInDept.length > siteSuggestions.length && (
+                        <span className="text-[11px] text-zinc-400">
+                          Showing {siteSuggestions.length} of {sitesInDept.length} — type to filter.
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
