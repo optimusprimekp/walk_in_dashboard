@@ -130,7 +130,6 @@ export default function Tables() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [newTableNo, setNewTableNo] = useState("");
   const [newInterviewer, setNewInterviewer] = useState("");
   const [newDepartments, setNewDepartments] = useState<string[]>([]);
   const [newPositions, setNewPositions] = useState<string[]>([]);
@@ -168,6 +167,9 @@ export default function Tables() {
     });
   }, [newDepartments, sitePositions]);
 
+  // Next table number is auto-assigned: highest existing number + 1.
+  const nextTableNo = (tables ?? []).reduce((max, t) => Math.max(max, t.tableNo ?? 0), 0) + 1;
+
   const createMutation = useCreateTable();
   const updateMutation = useUpdateTable();
   const deleteMutation = useDeleteTable();
@@ -181,7 +183,7 @@ export default function Tables() {
     createMutation.mutate(
       {
         data: {
-          tableNo: parseInt(newTableNo),
+          tableNo: nextTableNo,
           interviewerName: newInterviewer,
           department: JSON.stringify(newDepartments),
           positions: newPositions.length > 0 ? JSON.stringify(newPositions) : undefined,
@@ -192,7 +194,6 @@ export default function Tables() {
         onSuccess: () => {
           queryClient.invalidateQueries();
           setIsAddOpen(false);
-          setNewTableNo("");
           setNewInterviewer("");
           setNewDepartments([]);
           setNewPositions([]);
@@ -258,26 +259,22 @@ export default function Tables() {
               </DialogHeader>
               <form onSubmit={handleCreate} className="flex flex-col min-h-0 flex-1">
                 <div className="space-y-5 px-6 py-4 overflow-y-auto flex-1 min-h-0">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Table Number</Label>
-                      <Input
-                        type="number"
-                        required
-                        value={newTableNo}
-                        onChange={e => setNewTableNo(e.target.value)}
-                        placeholder="e.g. 1"
-                      />
+                  <div className="flex items-center justify-between gap-3 rounded-lg bg-zinc-50 border border-zinc-200 px-4 py-3">
+                    <div>
+                      <div className="text-sm font-medium text-zinc-700">Table Number</div>
+                      <div className="text-xs text-zinc-400">Auto-assigned</div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Interviewer Name</Label>
-                      <Input
-                        required
-                        value={newInterviewer}
-                        onChange={e => setNewInterviewer(e.target.value)}
-                        placeholder="Full name"
-                      />
-                    </div>
+                    <span className="text-2xl font-bold text-primary">#{nextTableNo}</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Interviewer Name</Label>
+                    <Input
+                      required
+                      value={newInterviewer}
+                      onChange={e => setNewInterviewer(e.target.value)}
+                      placeholder="Full name"
+                    />
                   </div>
 
                   <div className="space-y-2">
