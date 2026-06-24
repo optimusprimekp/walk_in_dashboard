@@ -64,6 +64,7 @@ export default function InterviewerDashboard() {
   const [selPosition, setSelPosition] = useState("");
   const [currentCtc, setCurrentCtc] = useState("");
   const [negotiatedCtc, setNegotiatedCtc] = useState("");
+  const [noticePeriod, setNoticePeriod] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
@@ -130,7 +131,7 @@ export default function InterviewerDashboard() {
 
   const resetSelection = () => {
     setSelDept(""); setSelSite(""); setSelPosition("");
-    setCurrentCtc(""); setNegotiatedCtc("");
+    setCurrentCtc(""); setNegotiatedCtc(""); setNoticePeriod("");
     setShowSelectionForm(false);
   };
 
@@ -174,7 +175,8 @@ export default function InterviewerDashboard() {
           selectedPosition: selPosition || undefined,
           currentCtc: currentCtc || undefined,
           negotiatedCtc: negotiatedCtc || undefined,
-        },
+          noticePeriod: noticePeriod ? Number(noticePeriod) : undefined,
+        } as any,
       },
       {
         onSuccess: () => {
@@ -368,6 +370,27 @@ export default function InterviewerDashboard() {
                             <DollarSign className="w-4 h-4" /> Negotiated CTC
                           </Label>
                           <Input value={negotiatedCtc} onChange={e => setNegotiatedCtc(e.target.value)} placeholder="e.g. ₹6 LPA" className="bg-zinc-50" />
+                        </div>
+
+                        {/* Notice period — days (1-90) */}
+                        <div className="space-y-2">
+                          <Label className="font-semibold flex items-center gap-2">
+                            <Clock className="w-4 h-4" /> Notice Period (days)
+                          </Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={90}
+                            value={noticePeriod}
+                            onChange={e => {
+                              const v = e.target.value;
+                              if (v === "") { setNoticePeriod(""); return; }
+                              const n = Math.max(1, Math.min(90, Number(v)));
+                              setNoticePeriod(String(n));
+                            }}
+                            placeholder="e.g. 30"
+                            className="bg-zinc-50"
+                          />
                         </div>
                       </div>
 

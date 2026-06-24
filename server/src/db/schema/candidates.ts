@@ -16,6 +16,7 @@ export const candidatesTable = pgTable("candidates", {
   currentDesignation: text("current_designation"),
   currentCtc: text("current_ctc"),
   negotiatedCtc: text("negotiated_ctc"),
+  noticePeriod: integer("notice_period"),
   selectedSite: text("selected_site"),
   selectedPosition: text("selected_position"),
   remarks: text("remarks"),

@@ -87,7 +87,11 @@ router.post("/sessions/:id/start", requireAuth, async (req, res) => {
 router.post("/sessions/:id/end", requireAuth, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const { result, remarks, selectedSite, selectedPosition, currentCtc, negotiatedCtc } = req.body;
+    const { result, remarks, selectedSite, selectedPosition, currentCtc, negotiatedCtc, noticePeriod } = req.body;
+    const noticePeriodValue =
+      noticePeriod === undefined || noticePeriod === null || noticePeriod === ""
+        ? null
+        : Number(noticePeriod);
     if (!result) return res.status(400).json({ error: "result required" });
     if (!remarks || !remarks.trim()) return res.status(400).json({ error: "remarks required — please add a comment before ending the session" });
     const now = new Date();
@@ -112,6 +116,7 @@ router.post("/sessions/:id/end", requireAuth, async (req, res) => {
         selectedPosition: selectedPosition || null,
         currentCtc: currentCtc || null,
         negotiatedCtc: negotiatedCtc || null,
+        noticePeriod: noticePeriodValue,
       })
       .where(eq(interviewSessionsTable.id, id))
       .returning();
@@ -124,6 +129,7 @@ router.post("/sessions/:id/end", requireAuth, async (req, res) => {
       if (selectedPosition) candidateUpdate.selectedPosition = selectedPosition;
       if (currentCtc) candidateUpdate.currentCtc = currentCtc;
       if (negotiatedCtc) candidateUpdate.negotiatedCtc = negotiatedCtc;
+      if (noticePeriodValue !== null) candidateUpdate.noticePeriod = noticePeriodValue;
     }
 
     await db

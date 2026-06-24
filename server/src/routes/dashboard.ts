@@ -72,7 +72,7 @@ router.get("/dashboard/tv", async (req, res) => {
       .from(tokenQueueTable)
       .where(sql`${tokenQueueTable.status} in ('WAITING', 'ASSIGNED', 'IN_INTERVIEW')`)
       .orderBy(tokenQueueTable.queuePosition)
-      .limit(20);
+      .limit(300);
 
     const enrichedTokens = await Promise.all(
       tokens.map(async (token) => {

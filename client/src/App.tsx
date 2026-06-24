@@ -7,6 +7,8 @@ import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/admin/dashboard";
 import TvDisplay from "@/pages/tv";
+import TvCalling from "@/pages/tv-calling";
+import TvWaiting from "@/pages/tv-waiting";
 import Checkin from "@/pages/checkin";
 import InterviewerDashboard from "@/pages/interviewer/dashboard";
 import Candidates from "@/pages/hr/candidates";
@@ -20,6 +22,8 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/tv" component={TvDisplay} />
+      <Route path="/tv/calling" component={TvCalling} />
+      <Route path="/tv/waiting" component={TvWaiting} />
       <Route path="/checkin" component={Checkin} />
       <Route path="/interviewer" component={InterviewerDashboard} />
       <Route path="/candidates" component={Candidates} />
