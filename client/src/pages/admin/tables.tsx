@@ -102,7 +102,7 @@ function PositionMultiSelect({
   }
 
   return (
-    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+    <div className="space-y-2">
       {allPositions.map((pos) => (
         <label
           key={pos}
@@ -234,54 +234,56 @@ export default function Tables() {
                 <Plus className="w-4 h-4" /> Add Table
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
+            <DialogContent className="max-w-md max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
+              <DialogHeader className="shrink-0 px-6 pt-6 pb-4 border-b border-zinc-100 text-left">
                 <DialogTitle>Add New Interview Table</DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleCreate} className="space-y-5 py-2">
-                <div className="grid grid-cols-2 gap-4">
+              <form onSubmit={handleCreate} className="flex flex-col min-h-0 flex-1">
+                <div className="space-y-5 px-6 py-4 overflow-y-auto flex-1 min-h-0">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Table Number</Label>
+                      <Input
+                        type="number"
+                        required
+                        value={newTableNo}
+                        onChange={e => setNewTableNo(e.target.value)}
+                        placeholder="e.g. 1"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Interviewer Name</Label>
+                      <Input
+                        required
+                        value={newInterviewer}
+                        onChange={e => setNewInterviewer(e.target.value)}
+                        placeholder="Full name"
+                      />
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
-                    <Label>Table Number</Label>
-                    <Input
-                      type="number"
-                      required
-                      value={newTableNo}
-                      onChange={e => setNewTableNo(e.target.value)}
-                      placeholder="e.g. 1"
+                    <Label className="font-semibold">
+                      Departments <span className="text-destructive">*</span>
+                      <span className="text-zinc-400 font-normal ml-1">(select all that apply)</span>
+                    </Label>
+                    <DepartmentMultiSelect value={newDepartments} onChange={setNewDepartments} />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="font-semibold">
+                      Candidate Positions
+                      <span className="text-zinc-400 font-normal ml-1">(filter which roles this table handles)</span>
+                    </Label>
+                    <PositionMultiSelect
+                      allPositions={allPositions}
+                      value={newPositions}
+                      onChange={setNewPositions}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Interviewer Name</Label>
-                    <Input
-                      required
-                      value={newInterviewer}
-                      onChange={e => setNewInterviewer(e.target.value)}
-                      placeholder="Full name"
-                    />
-                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="font-semibold">
-                    Departments <span className="text-destructive">*</span>
-                    <span className="text-zinc-400 font-normal ml-1">(select all that apply)</span>
-                  </Label>
-                  <DepartmentMultiSelect value={newDepartments} onChange={setNewDepartments} />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="font-semibold">
-                    Candidate Positions
-                    <span className="text-zinc-400 font-normal ml-1">(filter which roles this table handles)</span>
-                  </Label>
-                  <PositionMultiSelect
-                    allPositions={allPositions}
-                    value={newPositions}
-                    onChange={setNewPositions}
-                  />
-                </div>
-
-                <DialogFooter>
+                <DialogFooter className="shrink-0 px-6 py-4 border-t border-zinc-100">
                   <Button type="submit" disabled={createMutation.isPending} className="w-full h-11">
                     {createMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                     Save Table
