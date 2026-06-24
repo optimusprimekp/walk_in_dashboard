@@ -6,7 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, ArrowLeft, CheckCircle2, Camera, ChevronRight } from "lucide-react";
 
-type Step = 'HOME' | 'PRE_REGISTERED_LOOKUP' | 'DEPT_POSITION' | 'CONFIRMATION';
+type Step = 'HOME' | 'PRE_REGISTERED_LOOKUP' | 'DEPT_POSITION' | 'CONFIRMATION' | 'ALREADY';
+
+const IN_QUEUE_STATUSES = ["WAITING", "ASSIGNED", "IN_INTERVIEW"];
+const DONE_STATUSES = ["COMPLETED", "SELECTED", "REJECTED", "ON_HOLD", "NO_SHOW"];
 
 const FIXED_DEPTS = ["Solar O&M", "Wind BoP O&M", "R&D"];
 
@@ -20,6 +23,7 @@ export default function Checkin() {
   const [selectedPosition, setSelectedPosition] = useState("");
 
   const [tokenResult, setTokenResult] = useState<{ tokenNo: string; name: string; position: string; department?: string } | null>(null);
+  const [alreadyInfo, setAlreadyInfo] = useState<{ title: string; detail: string; tokenNo?: string | null } | null>(null);
   const [countdown, setCountdown] = useState(30);
 
   const lookupMutation = useLookupCandidate();
@@ -33,6 +37,7 @@ export default function Checkin() {
     setSelectedDept("");
     setSelectedPosition("");
     setTokenResult(null);
+    setAlreadyInfo(null);
     setCountdown(30);
     setStep('HOME');
   };
@@ -70,6 +75,26 @@ export default function Checkin() {
           email: isEmail ? identifier : undefined,
         },
       });
+      // Already finished an interview — block re-check-in.
+      if (DONE_STATUSES.includes(candidate.status)) {
+        setAlreadyInfo({
+          title: "Interview already taken",
+          detail: "Our records show your interview is already complete. Please contact the HR desk if you need help.",
+          tokenNo: candidate.tokenNo,
+        });
+        setStep('ALREADY');
+        return;
+      }
+      // Already in the queue — don't issue a second token.
+      if (IN_QUEUE_STATUSES.includes(candidate.status)) {
+        setAlreadyInfo({
+          title: "You're already checked in",
+          detail: "Please take a seat and watch the TV screen for your token to be called.",
+          tokenNo: candidate.tokenNo,
+        });
+        setStep('ALREADY');
+        return;
+      }
       setCandidateId(candidate.id);
       setCandidateName(candidate.name);
       setStep('DEPT_POSITION');
@@ -295,6 +320,30 @@ export default function Checkin() {
                     )}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* ── ALREADY CHECKED IN / COMPLETED ── */}
+            {step === 'ALREADY' && alreadyInfo && (
+              <div className="py-4 sm:py-8 text-center space-y-5 sm:space-y-6 animate-in zoom-in-95 duration-500">
+                <div className="mx-auto h-20 w-20 sm:h-24 sm:w-24 bg-amber-100 rounded-full flex items-center justify-center">
+                  <CheckCircle2 className="h-10 w-10 sm:h-12 sm:w-12 text-amber-600" />
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-zinc-900">{alreadyInfo.title}</h2>
+                  <p className="text-base text-zinc-500 max-w-md mx-auto">{alreadyInfo.detail}</p>
+                </div>
+                {alreadyInfo.tokenNo && (
+                  <div className="bg-zinc-50 p-5 sm:p-6 rounded-2xl border-2 border-zinc-100 inline-block">
+                    <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1">Your Token</p>
+                    <div className="text-5xl sm:text-6xl font-bold text-primary tracking-tighter">{alreadyInfo.tokenNo}</div>
+                  </div>
+                )}
+                <div>
+                  <Button onClick={resetForm} className="h-12 px-8 text-base font-bold rounded-xl" variant="outline">
+                    Done
+                  </Button>
+                </div>
               </div>
             )}
 

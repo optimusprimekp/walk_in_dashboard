@@ -278,6 +278,14 @@ router.post("/candidates/:id/checkin", async (req, res) => {
         message: "Already checked in",
       });
     }
+    // Interview already finished — do not let the candidate check in again.
+    if (["COMPLETED", "SELECTED", "REJECTED", "ON_HOLD", "NO_SHOW"].includes(candidate.status)) {
+      return res.status(409).json({
+        error: "Your interview is already taken.",
+        alreadyCompleted: true,
+        tokenNo: candidate.tokenNo,
+      });
+    }
     const tokenNo = await getNextTokenNo();
     const [existingTokens] = await db
       .select({ count: sql<number>`count(*)` })

@@ -157,6 +157,54 @@ router.post("/sessions/:id/end", requireAuth, async (req, res) => {
   }
 });
 
+// Park the candidate at the table: the session is held (not ended) and the
+// table stays BUSY so no new candidate is auto-assigned until resume.
+router.post("/sessions/:id/hold", requireAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { remarks } = req.body ?? {};
+    const [session] = await db
+      .update(interviewSessionsTable)
+      .set({ status: "ON_HOLD", ...(remarks && remarks.trim() ? { remarks } : {}) })
+      .where(eq(interviewSessionsTable.id, id))
+      .returning();
+    if (!session) return res.status(404).json({ error: "Session not found" });
+
+    await db
+      .update(tokenQueueTable)
+      .set({ status: "ON_HOLD" })
+      .where(eq(tokenQueueTable.candidateId, session.candidateId));
+
+    res.json(await enrichSession(session));
+  } catch (err) {
+    logger.error({ err }, "Hold session error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Resume a held session back into the live interview.
+router.post("/sessions/:id/resume", requireAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const [session] = await db
+      .update(interviewSessionsTable)
+      .set({ status: "IN_PROGRESS" })
+      .where(eq(interviewSessionsTable.id, id))
+      .returning();
+    if (!session) return res.status(404).json({ error: "Session not found" });
+
+    await db
+      .update(tokenQueueTable)
+      .set({ status: "IN_INTERVIEW" })
+      .where(eq(tokenQueueTable.candidateId, session.candidateId));
+
+    res.json(await enrichSession(session));
+  } catch (err) {
+    logger.error({ err }, "Resume session error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.get("/sessions/:id", requireAuth, async (req, res) => {
   try {
     const id = parseInt(req.params.id);

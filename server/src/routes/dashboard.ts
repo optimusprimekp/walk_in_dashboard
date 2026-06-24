@@ -119,7 +119,7 @@ router.get("/dashboard/tv", async (req, res) => {
       }),
     );
 
-    const nowCalling = enrichedTokens.filter((t) => t.status === "ASSIGNED").slice(0, 3);
+    const nowCalling = enrichedTokens.filter((t) => t.status === "ASSIGNED").slice(0, 10);
     const stats = await getStats();
 
     res.json({ tokens: enrichedTokens, tables: enrichedTables, nowCalling, stats });

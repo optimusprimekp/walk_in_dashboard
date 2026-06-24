@@ -19,7 +19,8 @@ import {
   Loader2, PlayCircle, CheckCircle, XCircle, PauseCircle,
   Clock, Users, MapPin, Briefcase, DollarSign, Building2,
 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { customFetch } from "@/api/custom-fetch";
 
 function CountdownTimer({ startTime }: { startTime: string }) {
   const [timeLeft, setTimeLeft] = useState(20 * 60);
@@ -90,11 +91,31 @@ export default function InterviewerDashboard() {
 
   const activeToken = tokens?.find(
     t => t.assignedTableId?.toString() === selectedTableId &&
-         (t.status === "ASSIGNED" || t.status === "IN_INTERVIEW")
+         (t.status === "ASSIGNED" || t.status === "IN_INTERVIEW" || t.status === "ON_HOLD")
   );
 
   const startMutation = useStartSession();
   const endMutation = useEndSession();
+  const holdMutation = useMutation({
+    mutationFn: (sessionId: number) => customFetch(`/api/sessions/${sessionId}/hold`, { method: "POST" }),
+  });
+  const resumeMutation = useMutation({
+    mutationFn: (sessionId: number) => customFetch(`/api/sessions/${sessionId}/resume`, { method: "POST" }),
+  });
+
+  const handleHold = () => {
+    if (!selectedTable?.currentSessionId) return;
+    holdMutation.mutate(selectedTable.currentSessionId, {
+      onSuccess: () => { setRemarks(""); setRemarksError(false); queryClient.invalidateQueries(); },
+    });
+  };
+
+  const handleResume = () => {
+    if (!selectedTable?.currentSessionId) return;
+    resumeMutation.mutate(selectedTable.currentSessionId, {
+      onSuccess: () => queryClient.invalidateQueries(),
+    });
+  };
 
   // Derived dropdowns
   const uniqueDepts = [...new Set((sitePositions || []).map(sp => sp.department).filter(Boolean))].sort();
@@ -183,7 +204,7 @@ export default function InterviewerDashboard() {
               <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white h-10">
                 <SelectValue placeholder="Select your table" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-72">
                 {tables?.map(t => (
                   <SelectItem key={t.id} value={t.id.toString()}>
                     Table {t.tableNo} — {t.department || "General"}
@@ -271,7 +292,7 @@ export default function InterviewerDashboard() {
                         className="h-12 sm:h-16 text-sm sm:text-base font-bold border-destructive text-destructive hover:bg-destructive hover:text-white">
                         <XCircle className="w-4 h-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">REJECT</span><span className="sm:hidden">Reject</span>
                       </Button>
-                      <Button variant="outline" onClick={() => handleEnd("ON_HOLD")} disabled={endMutation.isPending}
+                      <Button variant="outline" onClick={handleHold} disabled={holdMutation.isPending}
                         className="h-12 sm:h-16 text-sm sm:text-base font-bold border-amber-500 text-amber-600 hover:bg-amber-500 hover:text-white">
                         <PauseCircle className="w-4 h-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">ON HOLD</span><span className="sm:hidden">Hold</span>
                       </Button>
@@ -298,7 +319,7 @@ export default function InterviewerDashboard() {
                             <SelectTrigger className="bg-zinc-50">
                               <SelectValue placeholder="Select department…" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="max-h-72">
                               {uniqueDepts.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                             </SelectContent>
                           </Select>
@@ -313,7 +334,7 @@ export default function InterviewerDashboard() {
                             <SelectTrigger className="bg-zinc-50">
                               <SelectValue placeholder={selDept ? "Select site…" : "Select dept first"} />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="max-h-72">
                               {sitesForDept.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                             </SelectContent>
                           </Select>
@@ -328,7 +349,7 @@ export default function InterviewerDashboard() {
                             <SelectTrigger className="bg-zinc-50">
                               <SelectValue placeholder={selSite ? "Select position…" : "Select site first"} />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="max-h-72">
                               {positionsForSite.map(p => <SelectItem key={p.id} value={p.position}>{p.position}</SelectItem>)}
                             </SelectContent>
                           </Select>
@@ -380,6 +401,27 @@ export default function InterviewerDashboard() {
                       </div>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* ON HOLD — screen frozen until resumed */}
+              {activeToken.status === "ON_HOLD" && (
+                <div className="py-8 text-center space-y-6 animate-in fade-in zoom-in-95 duration-300">
+                  <div className="mx-auto h-20 w-20 bg-amber-100 rounded-full flex items-center justify-center">
+                    <PauseCircle className="h-10 w-10 text-amber-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-amber-700">On Hold</h3>
+                    <p className="text-zinc-500 mt-1 max-w-sm mx-auto">
+                      This candidate is parked at your table. No new candidate will be assigned here until you resume.
+                    </p>
+                  </div>
+                  <Button onClick={handleResume} disabled={resumeMutation.isPending}
+                    className="h-14 px-8 text-lg font-bold rounded-xl bg-amber-600 hover:bg-amber-700 text-white">
+                    {resumeMutation.isPending
+                      ? <Loader2 className="w-5 h-5 animate-spin" />
+                      : <><PlayCircle className="w-5 h-5 mr-2" /> Resume Interview</>}
+                  </Button>
                 </div>
               )}
             </CardContent>

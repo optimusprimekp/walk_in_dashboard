@@ -23,6 +23,10 @@ export async function autoAssignToken(): Promise<void> {
 
   if (waitingTokens.length === 0) return;
 
+  // Track tokens assigned during this run so the same candidate is never
+  // placed at more than one table in a single pass.
+  const usedTokenIds = new Set<number>();
+
   for (const availableTable of availableTables) {
     // Parse table's accepted departments (JSON array or legacy string)
     let tableDepts: string[] = [];
@@ -46,7 +50,8 @@ export async function autoAssignToken(): Promise<void> {
     }
 
     // Find first waiting candidate that matches this table's dept + position filters
-    const matchingEntry = waitingTokens.find(({ candidate }) => {
+    const matchingEntry = waitingTokens.find(({ token, candidate }) => {
+      if (usedTokenIds.has(token.id)) return false;
       const deptMatch =
         tableDepts.length === 0 ||
         (candidate.department
@@ -63,6 +68,7 @@ export async function autoAssignToken(): Promise<void> {
     if (!matchingEntry) continue;
 
     const { token: waitingToken, candidate } = matchingEntry;
+    usedTokenIds.add(waitingToken.id);
 
     await db
       .update(tokenQueueTable)

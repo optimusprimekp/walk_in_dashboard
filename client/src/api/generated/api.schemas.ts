@@ -157,6 +157,7 @@ export const TokenStatus = {
   WAITING: 'WAITING',
   ASSIGNED: 'ASSIGNED',
   IN_INTERVIEW: 'IN_INTERVIEW',
+  ON_HOLD: 'ON_HOLD',
   COMPLETED: 'COMPLETED',
   NO_SHOW: 'NO_SHOW',
 } as const;
