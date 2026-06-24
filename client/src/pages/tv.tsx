@@ -83,27 +83,29 @@ export default function TvDisplay() {
         </div>
 
         {calling.length > 0 ? (
-          <div className="space-y-2">
+          <div className="grid grid-cols-5 gap-3">
             {visibleCalling.map((token) => (
               <div
                 key={token.id}
-                className="flex items-center gap-4 rounded-xl bg-primary px-6 py-2.5 shadow-lg"
+                className="rounded-xl overflow-hidden shadow-lg border border-primary/30"
               >
-                {/* Token number */}
-                <div className="flex items-baseline gap-2 w-40 shrink-0">
-                  <span className="text-xs font-bold uppercase tracking-widest text-primary-foreground/60">Token</span>
-                  <span className="text-4xl font-black text-white tracking-tighter leading-none">{token.tokenNo}</span>
+                {/* Top: token + name */}
+                <div className="bg-primary px-3 py-3 flex flex-col items-center text-center">
+                  <span className="text-[10px] font-bold tracking-widest text-primary-foreground/70 uppercase">
+                    Token
+                  </span>
+                  <span className="text-4xl font-black text-white tracking-tighter leading-none">
+                    {token.tokenNo}
+                  </span>
+                  <span className="text-sm font-semibold text-primary-foreground/90 mt-1 truncate max-w-full">
+                    {token.candidateName}
+                  </span>
                 </div>
 
-                {/* Candidate name */}
-                <div className="flex-1 min-w-0 text-2xl font-semibold text-white truncate">
-                  {token.candidateName}
-                </div>
-
-                {/* Table */}
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-sm font-bold uppercase tracking-wide text-primary-foreground/70">Proceed To</span>
-                  <span className="bg-white text-primary font-black text-2xl px-4 py-1 rounded-lg whitespace-nowrap">
+                {/* Bottom: table number */}
+                <div className="bg-white flex justify-between items-center px-3 py-2">
+                  <span className="text-black font-bold text-[10px] tracking-wide uppercase">Proceed To</span>
+                  <span className="font-black text-primary text-xl whitespace-nowrap">
                     TABLE {token.assignedTableNo}
                   </span>
                 </div>
@@ -111,7 +113,7 @@ export default function TvDisplay() {
             ))}
 
             {calling.length > visibleCalling.length && (
-              <div className="text-center text-zinc-500 font-semibold text-sm pt-1">
+              <div className="col-span-5 text-center text-zinc-500 font-semibold text-sm pt-1">
                 + {calling.length - visibleCalling.length} more being called
               </div>
             )}
