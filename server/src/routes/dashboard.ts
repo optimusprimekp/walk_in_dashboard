@@ -6,6 +6,7 @@ import {
   interviewSessionsTable,
   tokenQueueTable,
   announcementsTable,
+  sitePositionsTable,
 } from "../db";
 import { eq, and, sql, gte, desc } from "drizzle-orm";
 import { requireAuth } from "./auth";
@@ -162,6 +163,76 @@ router.get("/dashboard/positions", requireAuth, async (req, res) => {
     res.json(results.map((r) => ({ position: r.position, count: Number(r.count) })));
   } catch (err) {
     logger.error({ err }, "Position stats error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/dashboard/openings", requireAuth, async (_req, res) => {
+  try {
+    const positions = await db
+      .select({
+        department: sitePositionsTable.department,
+        site: sitePositionsTable.site,
+        position: sitePositionsTable.position,
+        openings: sitePositionsTable.openings,
+      })
+      .from(sitePositionsTable);
+
+    // Selected candidates grouped by the site + position they were placed into.
+    const selectedRows = await db
+      .select({
+        site: interviewSessionsTable.selectedSite,
+        position: interviewSessionsTable.selectedPosition,
+        count: sql<number>`count(*)`,
+      })
+      .from(interviewSessionsTable)
+      .where(eq(interviewSessionsTable.result, "SELECTED"))
+      .groupBy(interviewSessionsTable.selectedSite, interviewSessionsTable.selectedPosition);
+
+    type Pos = { position: string; openings: number; selected: number };
+    type Site = { site: string; department: string; openings: number; selected: number; positions: Map<string, Pos> };
+    const sites = new Map<string, Site>();
+
+    const getSite = (site: string, department: string): Site => {
+      let s = sites.get(site);
+      if (!s) {
+        s = { site, department, openings: 0, selected: 0, positions: new Map() };
+        sites.set(site, s);
+      }
+      return s;
+    };
+
+    for (const p of positions) {
+      const s = getSite(p.site, p.department || "");
+      const existing = s.positions.get(p.position);
+      if (existing) existing.openings += p.openings;
+      else s.positions.set(p.position, { position: p.position, openings: p.openings, selected: 0 });
+    }
+
+    for (const r of selectedRows) {
+      if (!r.site || !r.position) continue;
+      const s = getSite(r.site, "");
+      const pos = s.positions.get(r.position) ?? { position: r.position, openings: 0, selected: 0 };
+      pos.selected += Number(r.count);
+      s.positions.set(r.position, pos);
+    }
+
+    let totalOpenings = 0;
+    let totalSelected = 0;
+    const result = [...sites.values()]
+      .map((s) => {
+        const positionsArr = [...s.positions.values()].sort((a, b) => a.position.localeCompare(b.position));
+        const openings = positionsArr.reduce((n, p) => n + p.openings, 0);
+        const selected = positionsArr.reduce((n, p) => n + p.selected, 0);
+        totalOpenings += openings;
+        totalSelected += selected;
+        return { site: s.site, department: s.department, openings, selected, positions: positionsArr };
+      })
+      .sort((a, b) => b.selected - a.selected || a.site.localeCompare(b.site));
+
+    res.json({ totals: { openings: totalOpenings, selected: totalSelected }, sites: result });
+  } catch (err) {
+    logger.error({ err }, "Openings dashboard error");
     res.status(500).json({ error: "Internal server error" });
   }
 });

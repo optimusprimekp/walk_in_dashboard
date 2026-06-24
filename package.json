@@ -13,6 +13,8 @@
     "typecheck": "npm run typecheck --prefix client && npm run typecheck --prefix server",
     "db:push": "npm run db:push --prefix server",
     "db:seed": "npm run db:seed --prefix server",
+    "db:reset": "npm run db:reset --prefix server",
+    "db:seed:dummy": "npm run db:seed:dummy --prefix server",
     "import:sites": "npm run import:sites --prefix server --"
   },
   "devDependencies": {

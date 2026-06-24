@@ -88,12 +88,17 @@ export default function Dashboard() {
             <img src="/kp-logo.png" alt="KP Group" className="h-9 w-9 object-contain" />
             <h1 className="font-semibold text-lg">KP Group of Companies</h1>
           </div>
-          <nav className="flex items-center gap-6 text-sm font-medium">
+          <nav className="flex items-center gap-5 text-sm font-medium flex-wrap justify-end">
             <Link href="/" className="text-primary">Dashboard</Link>
             <Link href="/candidates" className="text-muted-foreground hover:text-foreground">Candidates</Link>
             <Link href="/tables" className="text-muted-foreground hover:text-foreground">Tables</Link>
             <Link href="/admin/site-positions" className="text-muted-foreground hover:text-foreground">Site Positions</Link>
-            <Link href="/tv" className="text-muted-foreground hover:text-foreground">TV Display</Link>
+            <Link href="/admin/openings" className="text-muted-foreground hover:text-foreground">Openings</Link>
+            <span className="h-4 w-px bg-border" />
+            <a href="/interviewer" target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">Interviewer ↗</a>
+            <a href="/tv/calling" target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">Calling ↗</a>
+            <a href="/tv/waiting" target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">Waiting ↗</a>
+            <a href="/tv" target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">TV ↗</a>
           </nav>
         </div>
       </header>
