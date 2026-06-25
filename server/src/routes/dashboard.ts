@@ -238,6 +238,34 @@ router.get("/dashboard/openings", requireAuth, async (_req, res) => {
   }
 });
 
+router.get("/dashboard/table-stats", requireAuth, async (_req, res) => {
+  try {
+    const tables = await db.select().from(interviewTablesTable).orderBy(interviewTablesTable.tableNo);
+    const results = await Promise.all(
+      tables.map(async (table) => {
+        const [sel] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(interviewSessionsTable)
+          .where(and(eq(interviewSessionsTable.tableId, table.id), eq(interviewSessionsTable.result, "SELECTED")));
+        const [rej] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(interviewSessionsTable)
+          .where(and(eq(interviewSessionsTable.tableId, table.id), eq(interviewSessionsTable.result, "REJECTED")));
+        return {
+          tableNo: table.tableNo,
+          interviewerName: table.interviewerName,
+          selected: Number(sel?.count ?? 0),
+          rejected: Number(rej?.count ?? 0),
+        };
+      })
+    );
+    res.json(results);
+  } catch (err) {
+    logger.error({ err }, "Table stats error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.get("/dashboard/announcements", async (req, res) => {
   try {
     const announcements = await db
