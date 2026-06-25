@@ -8,15 +8,18 @@ import { autoAssignToken } from "./queue";
 
 const router = Router();
 
+// Concurrency-safe token number: a dedicated Postgres sequence guarantees a
+// unique, gapless-enough number even under thousands of simultaneous check-ins.
+// (Counting rows + 1 raced and produced duplicate tokens under load.)
+// The sequence is created at startup (see ensureTokenSequence) and reset by db:reset.
 export async function getNextTokenNo(): Promise<string> {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const [result] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(tokenQueueTable)
-    .where(sql`${tokenQueueTable.createdAt} >= ${today}`);
-  const count = Number(result?.count ?? 0) + 1;
-  return `T${String(count).padStart(3, "0")}`;
+  const result = await db.execute(sql`SELECT nextval('token_seq') AS n`);
+  const n = Number((result.rows?.[0] as { n: string | number } | undefined)?.n ?? 0);
+  return `T${String(n).padStart(3, "0")}`;
+}
+
+export async function ensureTokenSequence(): Promise<void> {
+  await db.execute(sql`CREATE SEQUENCE IF NOT EXISTS token_seq`);
 }
 
 async function enrichToken(token: any) {

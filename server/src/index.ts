@@ -1,6 +1,7 @@
 import "./load-env";
 import app from "./app";
 import { logger } from "./lib/logger";
+import { ensureTokenSequence } from "./routes/tokens";
 
 const port = Number(process.env.PORT ?? 3001);
 
@@ -15,4 +16,7 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+
+  // Make sure the token-number sequence exists (concurrency-safe tokens).
+  ensureTokenSequence().catch((e) => logger.error({ err: e }, "Failed to ensure token sequence"));
 });

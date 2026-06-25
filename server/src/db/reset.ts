@@ -18,6 +18,10 @@ async function main() {
     sql`TRUNCATE TABLE candidates, token_queue, interview_sessions, announcements RESTART IDENTITY`,
   );
 
+  // Restart token numbering at T001.
+  await db.execute(sql`CREATE SEQUENCE IF NOT EXISTS token_seq`);
+  await db.execute(sql`ALTER SEQUENCE token_seq RESTART WITH 1`);
+
   await db.update(interviewTablesTable).set({
     status: "AVAILABLE",
     currentCandidateId: null,

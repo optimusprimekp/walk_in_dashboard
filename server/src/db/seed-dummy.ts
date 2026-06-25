@@ -130,6 +130,10 @@ async function main() {
     });
   }
 
+  // Continue real check-in token numbering after the dummy tokens.
+  await db.execute(sql`CREATE SEQUENCE IF NOT EXISTS token_seq`);
+  await db.execute(sql`ALTER SEQUENCE token_seq RESTART WITH ${sql.raw(String(tokenN + 1))}`);
+
   console.log(`Dummy data loaded: ${tables.length} at tables (${inInterviewCount} in interview), ${waitingCount} waiting.`);
   process.exit(0);
 }
