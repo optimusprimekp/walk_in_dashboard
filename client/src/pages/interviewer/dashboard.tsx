@@ -65,6 +65,7 @@ export default function InterviewerDashboard() {
   const [currentCtc, setCurrentCtc] = useState("");
   const [negotiatedCtc, setNegotiatedCtc] = useState("");
   const [noticePeriod, setNoticePeriod] = useState("");
+  const [selError, setSelError] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
@@ -132,6 +133,7 @@ export default function InterviewerDashboard() {
   const resetSelection = () => {
     setSelDept(""); setSelSite(""); setSelPosition("");
     setCurrentCtc(""); setNegotiatedCtc(""); setNoticePeriod("");
+    setSelError("");
     setShowSelectionForm(false);
   };
 
@@ -165,6 +167,11 @@ export default function InterviewerDashboard() {
 
   const handleConfirmSelection = () => {
     if (!selectedTable?.currentSessionId) return;
+    if (!selDept || !selSite || !selPosition) {
+      setSelError("Please select department, site, and position offered.");
+      return;
+    }
+    setSelError("");
     endMutation.mutate(
       {
         id: selectedTable.currentSessionId,
@@ -315,7 +322,7 @@ export default function InterviewerDashboard() {
                         {/* Department */}
                         <div className="space-y-2">
                           <Label className="font-semibold flex items-center gap-2">
-                            <Building2 className="w-4 h-4" /> Department
+                            <Building2 className="w-4 h-4" /> Department <span className="text-destructive">*</span>
                           </Label>
                           <Select value={selDept} onValueChange={v => { setSelDept(v); setSelSite(""); setSelPosition(""); }}>
                             <SelectTrigger className="bg-zinc-50">
@@ -330,7 +337,7 @@ export default function InterviewerDashboard() {
                         {/* Site */}
                         <div className="space-y-2">
                           <Label className="font-semibold flex items-center gap-2">
-                            <MapPin className="w-4 h-4" /> Site
+                            <MapPin className="w-4 h-4" /> Site <span className="text-destructive">*</span>
                           </Label>
                           <Select value={selSite} onValueChange={v => { setSelSite(v); setSelPosition(""); }} disabled={!selDept}>
                             <SelectTrigger className="bg-zinc-50">
@@ -345,7 +352,7 @@ export default function InterviewerDashboard() {
                         {/* Position */}
                         <div className="space-y-2">
                           <Label className="font-semibold flex items-center gap-2">
-                            <Briefcase className="w-4 h-4" /> Position Offered
+                            <Briefcase className="w-4 h-4" /> Position Offered <span className="text-destructive">*</span>
                           </Label>
                           <Select value={selPosition} onValueChange={setSelPosition} disabled={!selSite}>
                             <SelectTrigger className="bg-zinc-50">
@@ -360,16 +367,16 @@ export default function InterviewerDashboard() {
                         {/* CTC */}
                         <div className="space-y-2">
                           <Label className="font-semibold flex items-center gap-2">
-                            <DollarSign className="w-4 h-4" /> Current CTC
+                            <DollarSign className="w-4 h-4" /> Current On Hand Salary
                           </Label>
-                          <Input value={currentCtc} onChange={e => setCurrentCtc(e.target.value)} placeholder="e.g. ₹4.5 LPA" className="bg-zinc-50" />
+                          <Input value={currentCtc} onChange={e => setCurrentCtc(e.target.value)} placeholder="e.g. ₹35,000" className="bg-zinc-50" />
                         </div>
 
                         <div className="space-y-2">
                           <Label className="font-semibold flex items-center gap-2">
-                            <DollarSign className="w-4 h-4" /> Negotiated CTC
+                            <DollarSign className="w-4 h-4" /> Expected On Hand Salary
                           </Label>
-                          <Input value={negotiatedCtc} onChange={e => setNegotiatedCtc(e.target.value)} placeholder="e.g. ₹6 LPA" className="bg-zinc-50" />
+                          <Input value={negotiatedCtc} onChange={e => setNegotiatedCtc(e.target.value)} placeholder="e.g. ₹45,000" className="bg-zinc-50" />
                         </div>
 
                         {/* Notice period — days (1-90) */}
@@ -411,6 +418,10 @@ export default function InterviewerDashboard() {
                             <span className="text-zinc-400 text-sm"> / {openings} filled</span>
                           </div>
                         </div>
+                      )}
+
+                      {selError && (
+                        <p className="text-destructive text-sm font-medium">{selError}</p>
                       )}
 
                       <div className="flex gap-3">
