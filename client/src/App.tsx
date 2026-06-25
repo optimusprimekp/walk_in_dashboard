@@ -16,6 +16,7 @@ import Tables from "@/pages/admin/tables";
 import SitePositions from "@/pages/admin/site-positions";
 import OpeningsDashboard from "@/pages/admin/openings";
 import Reports from "@/pages/admin/reports";
+import SelectedCandidates from "@/pages/admin/selected-candidates";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/admin/site-positions" component={SitePositions} />
       <Route path="/admin/openings" component={OpeningsDashboard} />
       <Route path="/admin/reports" component={Reports} />
+      <Route path="/admin/selected" component={SelectedCandidates} />
       <Route path="/" component={Dashboard} />
       <Route component={NotFound} />
     </Switch>

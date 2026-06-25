@@ -238,6 +238,27 @@ router.get("/dashboard/openings", requireAuth, async (_req, res) => {
   }
 });
 
+router.get("/dashboard/selected-candidates", requireAuth, async (_req, res) => {
+  try {
+    const rows = await db
+      .select({
+        id: candidatesTable.id,
+        name: candidatesTable.name,
+        selectedPosition: candidatesTable.selectedPosition,
+        selectedSite: candidatesTable.selectedSite,
+        negotiatedCtc: candidatesTable.negotiatedCtc,
+        noticePeriod: candidatesTable.noticePeriod,
+      })
+      .from(candidatesTable)
+      .where(eq(candidatesTable.status, "SELECTED"))
+      .orderBy(candidatesTable.name);
+    res.json(rows);
+  } catch (err) {
+    logger.error({ err }, "Selected candidates error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.get("/dashboard/table-stats", requireAuth, async (_req, res) => {
   try {
     const tables = await db.select().from(interviewTablesTable).orderBy(interviewTablesTable.tableNo);

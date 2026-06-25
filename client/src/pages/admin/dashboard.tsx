@@ -96,6 +96,7 @@ export default function Dashboard() {
             <Link href="/admin/site-positions" className="text-muted-foreground hover:text-foreground">Site Positions</Link>
             <Link href="/admin/openings" className="text-muted-foreground hover:text-foreground">Openings</Link>
             <Link href="/admin/reports" className="text-muted-foreground hover:text-foreground">Reports</Link>
+            <Link href="/admin/selected" className="text-muted-foreground hover:text-foreground">Selected</Link>
             <span className="h-4 w-px bg-border" />
             <a href="/interviewer" target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">Interviewer ↗</a>
             <a href="/tv/calling" target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">Calling ↗</a>
