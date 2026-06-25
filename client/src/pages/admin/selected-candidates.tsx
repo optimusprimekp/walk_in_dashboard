@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Download, Search, Users, IndianRupee } from "lucide-react";
+import { Loader2, Download, Search, Users, IndianRupee, ArrowUpDown } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type SelectedCandidate = {
   id: number;
@@ -50,6 +51,7 @@ function exportCsv(rows: SelectedCandidate[]) {
 export default function SelectedCandidates() {
   const [, setLocation] = useLocation();
   const [search, setSearch] = useState("");
+  const [salarySort, setSalarySort] = useState<"none" | "asc" | "desc">("none");
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
@@ -71,14 +73,18 @@ export default function SelectedCandidates() {
   const filtered = useMemo(() => {
     if (!data) return [];
     const q = search.toLowerCase();
-    if (!q) return data;
-    return data.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        (c.selectedPosition ?? "").toLowerCase().includes(q) ||
-        (c.selectedSite ?? "").toLowerCase().includes(q),
-    );
-  }, [data, search]);
+    let result = q
+      ? data.filter(
+          (c) =>
+            c.name.toLowerCase().includes(q) ||
+            (c.selectedPosition ?? "").toLowerCase().includes(q) ||
+            (c.selectedSite ?? "").toLowerCase().includes(q),
+        )
+      : [...data];
+    if (salarySort === "asc") result.sort((a, b) => parseSalary(a.negotiatedCtc) - parseSalary(b.negotiatedCtc));
+    if (salarySort === "desc") result.sort((a, b) => parseSalary(b.negotiatedCtc) - parseSalary(a.negotiatedCtc));
+    return result;
+  }, [data, search, salarySort]);
 
   const totalCount = data?.length ?? 0;
   const totalSalary = useMemo(
@@ -157,8 +163,8 @@ export default function SelectedCandidates() {
         {/* Search + table */}
         <Card>
           <CardHeader className="pb-4">
-            <div className="flex items-center gap-3">
-              <div className="relative flex-1 max-w-sm">
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="relative flex-1 min-w-[200px] max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search by name, position or site…"
@@ -167,6 +173,17 @@ export default function SelectedCandidates() {
                   className="pl-9"
                 />
               </div>
+              <Select value={salarySort} onValueChange={(v) => setSalarySort(v as typeof salarySort)}>
+                <SelectTrigger className="w-52 gap-2">
+                  <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                  <SelectValue placeholder="Sort by salary" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Default order</SelectItem>
+                  <SelectItem value="asc">Salary: Low → High</SelectItem>
+                  <SelectItem value="desc">Salary: High → Low</SelectItem>
+                </SelectContent>
+              </Select>
               {search && (
                 <span className="text-sm text-muted-foreground">
                   {filtered.length} of {totalCount}
