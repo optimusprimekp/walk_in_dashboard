@@ -88,7 +88,7 @@ export default function TvCalling() {
           </div>
           <div className="flex-1 min-h-0 overflow-hidden">
             {inInterview.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-4 gap-3">
                 {inInterview.map((t) => <CallingBox key={t.id} token={t} inInterview />)}
               </div>
             ) : (
@@ -108,7 +108,7 @@ export default function TvCalling() {
           </div>
           <div className="flex-1 min-h-0 overflow-hidden">
             {assigned.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-4 gap-3">
                 {assigned.map((t) => <CallingBox key={t.id} token={t} inInterview={false} />)}
               </div>
             ) : (
