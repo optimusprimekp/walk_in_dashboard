@@ -10,7 +10,11 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  // Tune for load: default pg pool is 10. Raise via DB_POOL_MAX.
+  max: Number(process.env.DB_POOL_MAX ?? 30),
+});
 export const db = drizzle(pool, { schema });
 
 export * from "./schema";

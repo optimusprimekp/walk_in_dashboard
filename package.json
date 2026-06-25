@@ -15,6 +15,7 @@
     "db:seed": "npm run db:seed --prefix server",
     "db:reset": "npm run db:reset --prefix server",
     "db:seed:dummy": "npm run db:seed:dummy --prefix server",
+    "loadtest": "node loadtest/run.mjs",
     "import:sites": "npm run import:sites --prefix server --"
   },
   "devDependencies": {

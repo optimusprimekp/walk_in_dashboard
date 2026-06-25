@@ -23,10 +23,11 @@ async function getStats() {
     .select({ count: sql<number>`count(*)` })
     .from(candidatesTable)
     .where(sql`${candidatesTable.checkinTime} >= ${today}`);
+  // Status breakdown across all candidates (not date-filtered) so selected /
+  // rejected / etc. always reflect current totals regardless of server timezone.
   const statusCounts = await db
     .select({ status: candidatesTable.status, count: sql<number>`count(*)` })
     .from(candidatesTable)
-    .where(sql`${candidatesTable.checkinTime} >= ${today}`)
     .groupBy(candidatesTable.status);
   const sc: Record<string, number> = {};
   for (const row of statusCounts) sc[row.status] = Number(row.count);
