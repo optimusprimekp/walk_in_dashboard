@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, Link } from "wouter";
 import { useGetDashboardStats } from "@/api";
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, UserCheck, Clock, CheckCircle2, UserX, Loader2, QrCode, Printer, X } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import QRCode from "qrcode";
 
 function getCheckinUrl() {
@@ -57,8 +55,6 @@ function QrModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-type TableStat = { tableNo: number; interviewerName: string | null; selected: number; rejected: number };
-
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [showQr, setShowQr] = useState(false);
@@ -74,17 +70,6 @@ export default function Dashboard() {
     } as any,
   });
 
-  const { data: tableStats } = useQuery<TableStat[]>({
-    queryKey: ["dashboard-table-stats"],
-    queryFn: async () => {
-      const token = localStorage.getItem("auth_token");
-      const res = await fetch("/api/dashboard/table-stats", {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      return res.json();
-    },
-    refetchInterval: 10000,
-  });
 
   if (isLoading || !stats) {
     return (
@@ -110,6 +95,7 @@ export default function Dashboard() {
             <Link href="/tables" className="text-muted-foreground hover:text-foreground">Tables</Link>
             <Link href="/admin/site-positions" className="text-muted-foreground hover:text-foreground">Site Positions</Link>
             <Link href="/admin/openings" className="text-muted-foreground hover:text-foreground">Openings</Link>
+            <Link href="/admin/reports" className="text-muted-foreground hover:text-foreground">Reports</Link>
             <span className="h-4 w-px bg-border" />
             <a href="/interviewer" target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">Interviewer ↗</a>
             <a href="/tv/calling" target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">Calling ↗</a>
@@ -206,34 +192,6 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
-
-        {tableStats && tableStats.length > 0 && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="text-base">Table-wise Selected vs Rejected</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart
-                  data={tableStats.map(t => ({
-                    name: t.interviewerName ? `T${t.tableNo} – ${t.interviewerName}` : `Table ${t.tableNo}`,
-                    Selected: t.selected,
-                    Rejected: t.rejected,
-                  }))}
-                  margin={{ top: 4, right: 16, left: 0, bottom: 40 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-25} textAnchor="end" interval={0} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-                  <Tooltip />
-                  <Legend verticalAlign="top" />
-                  <Bar dataKey="Selected" fill="#10b981" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Rejected" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        )}
 
         <Card>
           <CardHeader>

@@ -15,6 +15,7 @@ import Candidates from "@/pages/hr/candidates";
 import Tables from "@/pages/admin/tables";
 import SitePositions from "@/pages/admin/site-positions";
 import OpeningsDashboard from "@/pages/admin/openings";
+import Reports from "@/pages/admin/reports";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/tables" component={Tables} />
       <Route path="/admin/site-positions" component={SitePositions} />
       <Route path="/admin/openings" component={OpeningsDashboard} />
+      <Route path="/admin/reports" component={Reports} />
       <Route path="/" component={Dashboard} />
       <Route component={NotFound} />
     </Switch>
