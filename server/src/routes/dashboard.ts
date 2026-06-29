@@ -244,12 +244,16 @@ router.get("/dashboard/selected-candidates", requireAuth, async (_req, res) => {
       .select({
         id: candidatesTable.id,
         name: candidatesTable.name,
+        department: candidatesTable.department,
         selectedPosition: candidatesTable.selectedPosition,
         selectedSite: candidatesTable.selectedSite,
         negotiatedCtc: candidatesTable.negotiatedCtc,
         noticePeriod: candidatesTable.noticePeriod,
+        tableNo: interviewTablesTable.tableNo,
+        interviewerName: interviewTablesTable.interviewerName,
       })
       .from(candidatesTable)
+      .leftJoin(interviewTablesTable, eq(candidatesTable.assignedTableId, interviewTablesTable.id))
       .where(eq(candidatesTable.status, "SELECTED"))
       .orderBy(candidatesTable.name);
     res.json(rows);

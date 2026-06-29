@@ -12,10 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 type SelectedCandidate = {
   id: number;
   name: string;
+  department: string | null;
   selectedPosition: string | null;
   selectedSite: string | null;
   negotiatedCtc: string | null;
   noticePeriod: number | null;
+  tableNo: number | null;
+  interviewerName: string | null;
 };
 
 function parseSalary(val: string | null): number {
@@ -30,9 +33,12 @@ function formatSalary(val: string | null): string {
 }
 
 function exportCsv(rows: SelectedCandidate[]) {
-  const headers = ["Name", "Offered Position", "Site", "On-hand Expected Salary", "Notice Period (days)"];
+  const headers = ["Name", "Department", "Table No", "Interviewer", "Offered Position", "Site", "On-hand Expected Salary", "Notice Period (days)"];
   const lines = rows.map((r) => [
     `"${r.name}"`,
+    `"${r.department ?? ""}"`,
+    r.tableNo ?? "",
+    `"${r.interviewerName ?? ""}"`,
     `"${r.selectedPosition ?? ""}"`,
     `"${r.selectedSite ?? ""}"`,
     `"${r.negotiatedCtc ?? ""}"`,
@@ -206,6 +212,9 @@ export default function SelectedCandidates() {
                   <TableRow>
                     <TableHead className="pl-6">#</TableHead>
                     <TableHead>Candidate Name</TableHead>
+                    <TableHead>Department</TableHead>
+                    <TableHead>Table</TableHead>
+                    <TableHead>Interviewer</TableHead>
                     <TableHead>Offered Position</TableHead>
                     <TableHead>Site</TableHead>
                     <TableHead className="text-right">On-hand Expected Salary</TableHead>
@@ -217,6 +226,11 @@ export default function SelectedCandidates() {
                     <TableRow key={c.id}>
                       <TableCell className="pl-6 text-muted-foreground text-sm">{i + 1}</TableCell>
                       <TableCell className="font-medium">{c.name}</TableCell>
+                      <TableCell className="text-muted-foreground">{c.department ?? "—"}</TableCell>
+                      <TableCell className="whitespace-nowrap font-medium">
+                        {c.tableNo != null ? `Table ${c.tableNo}` : "—"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{c.interviewerName ?? "—"}</TableCell>
                       <TableCell>
                         {c.selectedPosition ? (
                           <Badge variant="outline" className="bg-emerald-50 border-emerald-200 text-emerald-700 font-medium">
