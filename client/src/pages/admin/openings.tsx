@@ -8,18 +8,20 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, MapPin, Users, CheckCircle2, Download } from "lucide-react";
 
 function exportCsv(sites: OpeningsSite[]) {
-  const headers = ["Department", "Site", "Position", "Planned Openings", "Selected", "Fill %"];
+  const headers = ["Position ID", "Department", "Site", "Position", "Planned Openings", "Selected", "Fill %", "Selected Candidates"];
   const lines: string[] = [];
   for (const s of sites) {
     for (const p of s.positions) {
       const pct = p.openings > 0 ? ((p.selected / p.openings) * 100).toFixed(1) : "—";
       lines.push([
+        p.positionId,
         `"${s.department}"`,
         `"${s.site}"`,
         `"${p.position}"`,
         p.openings,
         p.selected,
         pct,
+        `"${p.candidates.join(", ")}"`,
       ].join(","));
     }
   }
@@ -33,7 +35,7 @@ function exportCsv(sites: OpeningsSite[]) {
   URL.revokeObjectURL(url);
 }
 
-type OpeningsPos = { position: string; openings: number; selected: number };
+type OpeningsPos = { positionId: string; position: string; openings: number; selected: number; candidates: string[] };
 type OpeningsSite = { site: string; department: string; openings: number; selected: number; positions: OpeningsPos[] };
 type OpeningsData = { totals: { openings: number; selected: number }; sites: OpeningsSite[] };
 
@@ -120,19 +122,31 @@ export default function OpeningsDashboard() {
                         return (
                           <div key={p.position}>
                             <div className="flex items-center justify-between text-sm mb-1">
-                              <span className="font-medium text-zinc-700 truncate">{p.position}</span>
-                              <span className={`font-semibold flex items-center gap-1 ${over ? "text-destructive" : "text-zinc-900"}`}>
+                              <div className="min-w-0">
+                                <span className="font-medium text-zinc-700 truncate block">{p.position}</span>
+                                <span className="text-[10px] text-zinc-400 font-mono">{p.positionId}</span>
+                              </div>
+                              <span className={`font-semibold flex items-center gap-1 shrink-0 ml-2 ${over ? "text-destructive" : "text-zinc-900"}`}>
                                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                                 {p.selected}
                                 <span className="text-zinc-400 font-normal">/ {p.openings || "—"}</span>
                               </span>
                             </div>
-                            <div className="h-2 rounded-full bg-zinc-100 overflow-hidden">
+                            <div className="h-2 rounded-full bg-zinc-100 overflow-hidden mb-1">
                               <div
                                 className={`h-full rounded-full ${over ? "bg-destructive" : "bg-emerald-500"}`}
                                 style={{ width: `${p.openings > 0 ? pct : (p.selected > 0 ? 100 : 0)}%` }}
                               />
                             </div>
+                            {p.candidates.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {p.candidates.map((name) => (
+                                  <span key={name} className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 rounded px-1.5 py-0.5 truncate max-w-full">
+                                    {name}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         );
                       })}

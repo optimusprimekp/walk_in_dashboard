@@ -172,6 +172,7 @@ router.get("/dashboard/openings", requireAuth, async (_req, res) => {
   try {
     const positions = await db
       .select({
+        id: sitePositionsTable.id,
         department: sitePositionsTable.department,
         site: sitePositionsTable.site,
         position: sitePositionsTable.position,
@@ -179,18 +180,27 @@ router.get("/dashboard/openings", requireAuth, async (_req, res) => {
       })
       .from(sitePositionsTable);
 
-    // Selected candidates grouped by the site + position they were placed into.
-    const selectedRows = await db
+    // Selected candidates with name, site, position
+    const selectedCandidates = await db
       .select({
-        site: interviewSessionsTable.selectedSite,
-        position: interviewSessionsTable.selectedPosition,
-        count: sql<number>`count(*)`,
+        name: candidatesTable.name,
+        site: candidatesTable.selectedSite,
+        position: candidatesTable.selectedPosition,
       })
-      .from(interviewSessionsTable)
-      .where(eq(interviewSessionsTable.result, "SELECTED"))
-      .groupBy(interviewSessionsTable.selectedSite, interviewSessionsTable.selectedPosition);
+      .from(candidatesTable)
+      .where(eq(candidatesTable.status, "SELECTED"));
 
-    type Pos = { position: string; openings: number; selected: number };
+    // Build a map of site+position -> candidate names
+    const candidateMap = new Map<string, string[]>();
+    for (const c of selectedCandidates) {
+      if (!c.site || !c.position) continue;
+      const key = `${c.site}||${c.position}`;
+      const arr = candidateMap.get(key) ?? [];
+      arr.push(c.name);
+      candidateMap.set(key, arr);
+    }
+
+    type Pos = { positionId: string; position: string; openings: number; selected: number; candidates: string[] };
     type Site = { site: string; department: string; openings: number; selected: number; positions: Map<string, Pos> };
     const sites = new Map<string, Site>();
 
@@ -205,17 +215,16 @@ router.get("/dashboard/openings", requireAuth, async (_req, res) => {
 
     for (const p of positions) {
       const s = getSite(p.site, p.department || "");
+      const positionId = `KP-${String(p.id).padStart(4, "0")}`;
+      const key = `${p.site}||${p.position}`;
+      const candidates = candidateMap.get(key) ?? [];
       const existing = s.positions.get(p.position);
-      if (existing) existing.openings += p.openings;
-      else s.positions.set(p.position, { position: p.position, openings: p.openings, selected: 0 });
-    }
-
-    for (const r of selectedRows) {
-      if (!r.site || !r.position) continue;
-      const s = getSite(r.site, "");
-      const pos = s.positions.get(r.position) ?? { position: r.position, openings: 0, selected: 0 };
-      pos.selected += Number(r.count);
-      s.positions.set(r.position, pos);
+      if (existing) {
+        existing.openings += p.openings;
+        existing.candidates = [...new Set([...existing.candidates, ...candidates])];
+      } else {
+        s.positions.set(p.position, { positionId, position: p.position, openings: p.openings, selected: candidates.length, candidates });
+      }
     }
 
     let totalOpenings = 0;
