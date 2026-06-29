@@ -69,7 +69,7 @@ export default function SelectedCandidates() {
   const [, setLocation] = useLocation();
   const [search, setSearch] = useState("");
   const [salarySort, setSalarySort] = useState<"none" | "asc" | "desc">("none");
-  const [tableSort, setTableSort] = useState<"none" | "asc" | "desc">("none");
+  const [tableFilter, setTableFilter] = useState<string>("all");
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
@@ -88,23 +88,24 @@ export default function SelectedCandidates() {
     refetchInterval: 10000,
   });
 
+  const tableNumbers = useMemo(() => {
+    if (!data) return [];
+    const nums = [...new Set(data.map((c) => c.tableNo).filter((n): n is number => n != null))].sort((a, b) => a - b);
+    return nums;
+  }, [data]);
+
   const filtered = useMemo(() => {
     if (!data) return [];
     const q = search.toLowerCase();
-    let result = q
-      ? data.filter(
-          (c) =>
-            c.name.toLowerCase().includes(q) ||
-            (c.selectedPosition ?? "").toLowerCase().includes(q) ||
-            (c.selectedSite ?? "").toLowerCase().includes(q),
-        )
-      : [...data];
+    let result = data.filter((c) => {
+      const matchesSearch = !q || c.name.toLowerCase().includes(q) || (c.selectedPosition ?? "").toLowerCase().includes(q) || (c.selectedSite ?? "").toLowerCase().includes(q);
+      const matchesTable = tableFilter === "all" || String(c.tableNo) === tableFilter;
+      return matchesSearch && matchesTable;
+    });
     if (salarySort === "asc") result.sort((a, b) => parseSalary(a.negotiatedCtc) - parseSalary(b.negotiatedCtc));
     if (salarySort === "desc") result.sort((a, b) => parseSalary(b.negotiatedCtc) - parseSalary(a.negotiatedCtc));
-    if (tableSort === "asc") result.sort((a, b) => (a.tableNo ?? 999) - (b.tableNo ?? 999));
-    if (tableSort === "desc") result.sort((a, b) => (b.tableNo ?? 0) - (a.tableNo ?? 0));
     return result;
-  }, [data, search, salarySort, tableSort]);
+  }, [data, search, salarySort, tableFilter]);
 
   const totalCount = data?.length ?? 0;
   const totalSalary = useMemo(
@@ -193,18 +194,18 @@ export default function SelectedCandidates() {
                   className="pl-9"
                 />
               </div>
-              <Select value={tableSort} onValueChange={(v) => { setTableSort(v as typeof tableSort); setSalarySort("none"); }}>
-                <SelectTrigger className="w-48 gap-2">
-                  <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                  <SelectValue placeholder="Sort by table" />
+              <Select value={tableFilter} onValueChange={setTableFilter}>
+                <SelectTrigger className="w-44 gap-2">
+                  <SelectValue placeholder="Filter by table" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Default order</SelectItem>
-                  <SelectItem value="asc">Table: 1 → Last</SelectItem>
-                  <SelectItem value="desc">Table: Last → 1</SelectItem>
+                  <SelectItem value="all">All Tables</SelectItem>
+                  {tableNumbers.map((n) => (
+                    <SelectItem key={n} value={String(n)}>Table {n}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              <Select value={salarySort} onValueChange={(v) => { setSalarySort(v as typeof salarySort); setTableSort("none"); }}>
+              <Select value={salarySort} onValueChange={(v) => setSalarySort(v as typeof salarySort)}>
                 <SelectTrigger className="w-52 gap-2">
                   <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
                   <SelectValue placeholder="Sort by salary" />
