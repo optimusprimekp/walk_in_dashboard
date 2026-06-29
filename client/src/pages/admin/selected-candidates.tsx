@@ -69,6 +69,7 @@ export default function SelectedCandidates() {
   const [, setLocation] = useLocation();
   const [search, setSearch] = useState("");
   const [salarySort, setSalarySort] = useState<"none" | "asc" | "desc">("none");
+  const [tableSort, setTableSort] = useState<"none" | "asc" | "desc">("none");
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
@@ -100,8 +101,10 @@ export default function SelectedCandidates() {
       : [...data];
     if (salarySort === "asc") result.sort((a, b) => parseSalary(a.negotiatedCtc) - parseSalary(b.negotiatedCtc));
     if (salarySort === "desc") result.sort((a, b) => parseSalary(b.negotiatedCtc) - parseSalary(a.negotiatedCtc));
+    if (tableSort === "asc") result.sort((a, b) => (a.tableNo ?? 999) - (b.tableNo ?? 999));
+    if (tableSort === "desc") result.sort((a, b) => (b.tableNo ?? 0) - (a.tableNo ?? 0));
     return result;
-  }, [data, search, salarySort]);
+  }, [data, search, salarySort, tableSort]);
 
   const totalCount = data?.length ?? 0;
   const totalSalary = useMemo(
@@ -190,7 +193,18 @@ export default function SelectedCandidates() {
                   className="pl-9"
                 />
               </div>
-              <Select value={salarySort} onValueChange={(v) => setSalarySort(v as typeof salarySort)}>
+              <Select value={tableSort} onValueChange={(v) => { setTableSort(v as typeof tableSort); setSalarySort("none"); }}>
+                <SelectTrigger className="w-48 gap-2">
+                  <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                  <SelectValue placeholder="Sort by table" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Default order</SelectItem>
+                  <SelectItem value="asc">Table: 1 → Last</SelectItem>
+                  <SelectItem value="desc">Table: Last → 1</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={salarySort} onValueChange={(v) => { setSalarySort(v as typeof salarySort); setTableSort("none"); }}>
                 <SelectTrigger className="w-52 gap-2">
                   <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
                   <SelectValue placeholder="Sort by salary" />
