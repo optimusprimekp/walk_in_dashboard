@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Download, Search, Users, IndianRupee, ArrowUpDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ChevronDown } from "lucide-react";
 
 type SelectedCandidate = {
   id: number;
@@ -18,6 +21,7 @@ type SelectedCandidate = {
   currentCtc: string | null;
   negotiatedCtc: string | null;
   noticePeriod: number | null;
+  remarks: string | null;
   tableNo: number | null;
   interviewerName: string | null;
 };
@@ -42,7 +46,7 @@ function calcHike(current: string | null, expected: string | null): string {
 }
 
 function exportCsv(rows: SelectedCandidate[]) {
-  const headers = ["Name", "Department", "Table No", "Interviewer", "Offered Position", "Site", "Current On-hand Salary", "On-hand Expected Salary", "Hike %", "Notice Period (days)"];
+  const headers = ["Name", "Department", "Table No", "Interviewer", "Offered Position", "Site", "Current On-hand Salary", "On-hand Expected Salary", "Hike %", "Notice Period (days)", "Comments"];
   const lines = rows.map((r) => [
     `"${r.name}"`,
     `"${r.department ?? ""}"`,
@@ -54,6 +58,7 @@ function exportCsv(rows: SelectedCandidate[]) {
     `"${r.negotiatedCtc ?? ""}"`,
     calcHike(r.currentCtc, r.negotiatedCtc),
     r.noticePeriod ?? "",
+    `"${(r.remarks ?? "").replace(/"/g, '""')}"`,
   ].join(","));
   const csv = [headers.join(","), ...lines].join("\n");
   const blob = new Blob([csv], { type: "text/csv" });
@@ -69,7 +74,7 @@ export default function SelectedCandidates() {
   const [, setLocation] = useLocation();
   const [search, setSearch] = useState("");
   const [salarySort, setSalarySort] = useState<"none" | "asc" | "desc">("none");
-  const [tableFilter, setTableFilter] = useState<string>("all");
+  const [tableFilter, setTableFilter] = useState<number[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
@@ -99,7 +104,7 @@ export default function SelectedCandidates() {
     const q = search.toLowerCase();
     let result = data.filter((c) => {
       const matchesSearch = !q || c.name.toLowerCase().includes(q) || (c.selectedPosition ?? "").toLowerCase().includes(q) || (c.selectedSite ?? "").toLowerCase().includes(q);
-      const matchesTable = tableFilter === "all" || String(c.tableNo) === tableFilter;
+      const matchesTable = tableFilter.length === 0 || (c.tableNo != null && tableFilter.includes(c.tableNo));
       return matchesSearch && matchesTable;
     });
     if (salarySort === "asc") result.sort((a, b) => parseSalary(a.negotiatedCtc) - parseSalary(b.negotiatedCtc));
@@ -194,17 +199,44 @@ export default function SelectedCandidates() {
                   className="pl-9"
                 />
               </div>
-              <Select value={tableFilter} onValueChange={setTableFilter}>
-                <SelectTrigger className="w-44 gap-2">
-                  <SelectValue placeholder="Filter by table" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Tables</SelectItem>
-                  {tableNumbers.map((n) => (
-                    <SelectItem key={n} value={String(n)}>Table {n}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-44 justify-between font-normal">
+                    <span className="truncate">
+                      {tableFilter.length === 0
+                        ? "All Tables"
+                        : tableFilter.length === 1
+                        ? `Table ${tableFilter[0]}`
+                        : `${tableFilter.length} tables`}
+                    </span>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-44 p-2" align="start">
+                  <div className="space-y-1 max-h-60 overflow-y-auto">
+                    <label className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                      <Checkbox
+                        checked={tableFilter.length === 0}
+                        onCheckedChange={() => setTableFilter([])}
+                      />
+                      All Tables
+                    </label>
+                    {tableNumbers.map((n) => (
+                      <label key={n} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                        <Checkbox
+                          checked={tableFilter.includes(n)}
+                          onCheckedChange={(checked) =>
+                            setTableFilter((prev) =>
+                              checked ? [...prev, n].sort((a, b) => a - b) : prev.filter((x) => x !== n)
+                            )
+                          }
+                        />
+                        Table {n}
+                      </label>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
               <Select value={salarySort} onValueChange={(v) => setSalarySort(v as typeof salarySort)}>
                 <SelectTrigger className="w-52 gap-2">
                   <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
@@ -247,6 +279,7 @@ export default function SelectedCandidates() {
                     <TableHead className="text-right">Expected On-hand</TableHead>
                     <TableHead className="text-center">Hike</TableHead>
                     <TableHead className="text-center pr-6">Notice Period</TableHead>
+                    <TableHead>Comments</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -295,6 +328,9 @@ export default function SelectedCandidates() {
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground max-w-[200px] truncate" title={c.remarks ?? ""}>
+                        {c.remarks ?? "—"}
                       </TableCell>
                     </TableRow>
                   ))}

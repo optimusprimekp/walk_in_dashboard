@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   BarChart,
   Bar,
@@ -41,14 +42,25 @@ export default function Reports() {
     refetchInterval: 10000,
   });
 
-  const chartData = (tableStats ?? []).map((t) => ({
+  const [sort, setSort] = useState<"table" | "selected" | "rejected">("table");
+
+  const sortedStats = useMemo(() => {
+    if (!tableStats) return [];
+    return [...tableStats].sort((a, b) => {
+      if (sort === "selected") return b.selected - a.selected;
+      if (sort === "rejected") return b.rejected - a.rejected;
+      return a.tableNo - b.tableNo;
+    });
+  }, [tableStats, sort]);
+
+  const chartData = sortedStats.map((t) => ({
     name: t.interviewerName ? `T${t.tableNo} – ${t.interviewerName}` : `Table ${t.tableNo}`,
     Selected: t.selected,
     Rejected: t.rejected,
   }));
 
-  const totalSelected = (tableStats ?? []).reduce((s, t) => s + t.selected, 0);
-  const totalRejected = (tableStats ?? []).reduce((s, t) => s + t.rejected, 0);
+  const totalSelected = sortedStats.reduce((s, t) => s + t.selected, 0);
+  const totalRejected = sortedStats.reduce((s, t) => s + t.rejected, 0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -143,8 +155,18 @@ export default function Reports() {
         {/* Table breakdown */}
         {tableStats && tableStats.length > 0 && (
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Breakdown by Table</CardTitle>
+              <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
+                <SelectTrigger className="w-48 h-8 text-sm">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="table">Sort: Table No</SelectItem>
+                  <SelectItem value="selected">Sort: Selected (High → Low)</SelectItem>
+                  <SelectItem value="rejected">Sort: Rejected (High → Low)</SelectItem>
+                </SelectContent>
+              </Select>
             </CardHeader>
             <CardContent className="p-0">
               <table className="w-full text-sm">
@@ -158,7 +180,7 @@ export default function Reports() {
                   </tr>
                 </thead>
                 <tbody>
-                  {tableStats.map((t) => (
+                  {sortedStats.map((t) => (
                     <tr key={t.tableNo} className="border-b border-border last:border-0 hover:bg-muted/20">
                       <td className="px-4 py-3 font-medium">Table {t.tableNo}</td>
                       <td className="px-4 py-3 text-muted-foreground">{t.interviewerName ?? "—"}</td>
