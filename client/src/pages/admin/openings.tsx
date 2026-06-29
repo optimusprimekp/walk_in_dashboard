@@ -5,7 +5,33 @@ import { customFetch } from "@/api/custom-fetch";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MapPin, Users, CheckCircle2 } from "lucide-react";
+import { Loader2, MapPin, Users, CheckCircle2, Download } from "lucide-react";
+
+function exportCsv(sites: OpeningsSite[]) {
+  const headers = ["Department", "Site", "Position", "Planned Openings", "Selected", "Fill %"];
+  const lines: string[] = [];
+  for (const s of sites) {
+    for (const p of s.positions) {
+      const pct = p.openings > 0 ? ((p.selected / p.openings) * 100).toFixed(1) : "—";
+      lines.push([
+        `"${s.department}"`,
+        `"${s.site}"`,
+        `"${p.position}"`,
+        p.openings,
+        p.selected,
+        pct,
+      ].join(","));
+    }
+  }
+  const csv = [headers.join(","), ...lines].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `openings-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 type OpeningsPos = { position: string; openings: number; selected: number };
 type OpeningsSite = { site: string; department: string; openings: number; selected: number; positions: OpeningsPos[] };
@@ -44,10 +70,22 @@ export default function OpeningsDashboard() {
               </p>
             </div>
           </div>
-          <label className="flex items-center gap-2 text-sm text-zinc-600 cursor-pointer">
-            <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} />
-            Show sites with no selections
-          </label>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 text-sm text-zinc-600 cursor-pointer">
+              <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} />
+              Show sites with no selections
+            </label>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              disabled={!data || sites.length === 0}
+              onClick={() => data && exportCsv(showAll ? sites : sites)}
+            >
+              <Download className="h-4 w-4" />
+              Export CSV
+            </Button>
+          </div>
         </div>
       </header>
 
