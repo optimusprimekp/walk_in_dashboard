@@ -15,6 +15,7 @@ type SelectedCandidate = {
   department: string | null;
   selectedPosition: string | null;
   selectedSite: string | null;
+  currentCtc: string | null;
   negotiatedCtc: string | null;
   noticePeriod: number | null;
   tableNo: number | null;
@@ -32,8 +33,16 @@ function formatSalary(val: string | null): string {
   return val.trim();
 }
 
+function calcHike(current: string | null, expected: string | null): string {
+  const c = parseSalary(current);
+  const e = parseSalary(expected);
+  if (!c || !e) return "—";
+  const pct = ((e - c) / c) * 100;
+  return `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`;
+}
+
 function exportCsv(rows: SelectedCandidate[]) {
-  const headers = ["Name", "Department", "Table No", "Interviewer", "Offered Position", "Site", "On-hand Expected Salary", "Notice Period (days)"];
+  const headers = ["Name", "Department", "Table No", "Interviewer", "Offered Position", "Site", "Current On-hand Salary", "On-hand Expected Salary", "Hike %", "Notice Period (days)"];
   const lines = rows.map((r) => [
     `"${r.name}"`,
     `"${r.department ?? ""}"`,
@@ -41,7 +50,9 @@ function exportCsv(rows: SelectedCandidate[]) {
     `"${r.interviewerName ?? ""}"`,
     `"${r.selectedPosition ?? ""}"`,
     `"${r.selectedSite ?? ""}"`,
+    `"${r.currentCtc ?? ""}"`,
     `"${r.negotiatedCtc ?? ""}"`,
+    calcHike(r.currentCtc, r.negotiatedCtc),
     r.noticePeriod ?? "",
   ].join(","));
   const csv = [headers.join(","), ...lines].join("\n");
@@ -217,7 +228,9 @@ export default function SelectedCandidates() {
                     <TableHead>Interviewer</TableHead>
                     <TableHead>Offered Position</TableHead>
                     <TableHead>Site</TableHead>
-                    <TableHead className="text-right">On-hand Expected Salary</TableHead>
+                    <TableHead className="text-right">Current On-hand</TableHead>
+                    <TableHead className="text-right">Expected On-hand</TableHead>
+                    <TableHead className="text-center">Hike</TableHead>
                     <TableHead className="text-center pr-6">Notice Period</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -241,8 +254,23 @@ export default function SelectedCandidates() {
                         )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">{c.selectedSite ?? "—"}</TableCell>
+                      <TableCell className="text-right font-mono text-muted-foreground">
+                        {formatSalary(c.currentCtc)}
+                      </TableCell>
                       <TableCell className="text-right font-mono">
                         {formatSalary(c.negotiatedCtc)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {(() => {
+                          const h = calcHike(c.currentCtc, c.negotiatedCtc);
+                          if (h === "—") return <span className="text-muted-foreground">—</span>;
+                          const positive = h.startsWith("+");
+                          return (
+                            <Badge variant="outline" className={positive ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-red-50 border-red-200 text-red-700"}>
+                              {h}
+                            </Badge>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell className="text-center pr-6">
                         {c.noticePeriod != null ? (

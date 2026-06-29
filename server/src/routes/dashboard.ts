@@ -247,6 +247,7 @@ router.get("/dashboard/selected-candidates", requireAuth, async (_req, res) => {
         department: candidatesTable.department,
         selectedPosition: candidatesTable.selectedPosition,
         selectedSite: candidatesTable.selectedSite,
+        currentCtc: candidatesTable.currentCtc,
         negotiatedCtc: candidatesTable.negotiatedCtc,
         noticePeriod: candidatesTable.noticePeriod,
         tableNo: interviewTablesTable.tableNo,
