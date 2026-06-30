@@ -36,20 +36,18 @@ router.get("/candidates", requireAuth, async (req: any, res) => {
       query = query.where(and(...conditions));
     }
     const candidates = await query.orderBy(candidatesTable.createdAt);
-    const result = await Promise.all(
-      candidates.map(async (c) => {
-        let assignedTableNo = null;
-        if (c.assignedTableId) {
-          const { interviewTablesTable } = await import("../db");
-          const [table] = await db
-            .select({ tableNo: interviewTablesTable.tableNo })
-            .from(interviewTablesTable)
-            .where(eq(interviewTablesTable.id, c.assignedTableId));
-          assignedTableNo = table?.tableNo ?? null;
-        }
-        return { ...c, assignedTableNo };
-      }),
-    );
+    const { interviewTablesTable } = await import("../db");
+    const allTables = await db.select({ id: interviewTablesTable.id, tableNo: interviewTablesTable.tableNo, interviewerName: interviewTablesTable.interviewerName }).from(interviewTablesTable);
+    const tableMap = new Map(allTables.map((t) => [t.id, t]));
+
+    const result = candidates.map((c) => {
+      const tableRow = c.assignedTableId ? tableMap.get(c.assignedTableId) : null;
+      return {
+        ...c,
+        assignedTableNo: tableRow?.tableNo ?? null,
+        interviewerName: tableRow?.interviewerName ?? null,
+      };
+    });
     res.json(result);
   } catch (err) {
     logger.error({ err }, "List candidates error");

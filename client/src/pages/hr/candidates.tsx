@@ -284,6 +284,9 @@ export default function Candidates() {
                     <TableHead className="font-semibold">Current Role</TableHead>
                     <TableHead className="font-semibold">Contact</TableHead>
                     <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold">Department</TableHead>
+                    <TableHead className="font-semibold">Table</TableHead>
+                    <TableHead className="font-semibold">Interviewer</TableHead>
                     <TableHead className="font-semibold">Site / Position</TableHead>
                     <TableHead className="font-semibold min-w-[200px]">Comments</TableHead>
                   </TableRow>
@@ -291,7 +294,7 @@ export default function Candidates() {
                 <TableBody>
                   {filteredCandidates?.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="h-32 text-center text-zinc-500">
+                      <TableCell colSpan={10} className="h-32 text-center text-zinc-500">
                         No candidates found matching your criteria.
                       </TableCell>
                     </TableRow>
@@ -329,6 +332,15 @@ export default function Candidates() {
                               )}
                             </div>
                           )}
+                        </TableCell>
+                        <TableCell className="text-sm text-zinc-600">
+                          {(candidate as any).department ?? <span className="text-zinc-300">—</span>}
+                        </TableCell>
+                        <TableCell className="text-sm font-medium text-zinc-700">
+                          {(candidate as any).assignedTableNo != null ? `Table ${(candidate as any).assignedTableNo}` : <span className="text-zinc-300">—</span>}
+                        </TableCell>
+                        <TableCell className="text-sm text-zinc-600">
+                          {(candidate as any).interviewerName ?? <span className="text-zinc-300">—</span>}
                         </TableCell>
                         <TableCell>
                           {(candidate.selectedSite || candidate.selectedPosition) ? (
